@@ -3,68 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>空港・ビル暗証番号チェッカー</title>
+    <title>暗証番号チェッカー (エディタ機能付き)</title>
     <style>
-        /* スマホ・iPad向けのクリーンなデザイン */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f5f5f7;
             margin: 0;
-            padding: 15px;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Bearアプリ風の左側サイドバー (タブセレクトエリア) */
+        .sidebar {
+            width: 280px;
+            background: #f9f9fb;
+            border-right: 1px solid #e5e5ea;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            box-sizing: border-box;
+            height: 100%;
         }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 400px;
-            box-sizing: border-box;
-        }
-        h1 { font-size: 1.3rem; color: #1d1d1f; text-align: center; margin-top: 0; margin-bottom: 15px; }
-        
-        /* ステータスとリトライボタン */
-        .status-container {
+        .sidebar-header {
+            padding: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #8e8e93;
+            border-bottom: 1px solid #e5e5ea;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #e5e5ea;
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
         }
-        .status { font-size: 0.85rem; color: #48484a; flex: 1; padding-right: 10px; }
-        .error { color: #ff3b30; font-weight: bold; }
-        .retry-btn {
-            background-color: #0071e3;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            border-radius: 8px;
+        .tab-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px 0;
+        }
+        .tab-item {
+            padding: 12px 15px;
             cursor: pointer;
+            border-bottom: 1px solid #f1f1f4;
+            font-size: 0.95rem;
+            color: #3a3a3c;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
-        .retry-btn:active { background-color: #005bb5; }
+        .tab-item:hover { background-color: #f1f1f4; }
+        .tab-item.active {
+            background-color: #e5e5ea;
+            font-weight: bold;
+            color: #1d1d1f;
+        }
+        .tab-badge {
+            font-size: 0.75rem;
+            background: #0071e3;
+            color: white;
+            padding: 1px 6px;
+            border-radius: 10px;
+            align-self: flex-start;
+        }
 
-        .building-title {
-            font-size: 1.4rem;
+        /* 右側 メイン表示・編集エリア */
+        .main-content {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+        .top-bar {
+            padding: 10px 20px;
+            border-bottom: 1px solid #e5e5ea;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: #e5e5ea;
+            color: #48484a;
+        }
+        .status-badge.gps-active { background: #d1e7dd; color: #0f5132; }
+        .status-badge.error { background: #f8d7da; color: #842029; }
+
+        /* エディタエリア本体 */
+        .editor-container {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        
+        /* 編集可能なタイトル */
+        .editable-title {
+            font-size: 1.6rem;
             font-weight: bold;
             color: #1d1d1f;
             border-bottom: 2px solid #0071e3;
             padding-bottom: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            outline: none;
         }
 
-        /* 各暗証番号のレイアウト */
+        /* 各アイテム（編集可能） */
         .code-item {
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             padding: 6px 0;
             border-bottom: 1px dashed #e5e5ea;
         }
@@ -72,190 +121,243 @@
             font-size: 0.95rem;
             color: #3a3a3c;
             margin-bottom: 4px;
+            outline: none;
         }
         .code-value {
             display: inline-block;
+            outline: none;
+            padding: 2px 4px;
+            border-radius: 4px;
         }
 
-        /* 元のメモの見た目を再現する装飾クラス */
+        /* Bear風スタイルの再現 */
         .size-normal { font-size: 1.1rem; }
         .size-large  { font-size: 1.5rem; }
         .size-xlarge { font-size: 2.0rem; }
         .weight-bold { font-weight: bold; }
         
-        .highlight-blue { background-color: #d1e7dd; padding: 2px 6px; border-radius: 4px; color: #0f5132; }
-        .highlight-yellow { background-color: #fff3cd; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
-        .highlight-pink   { background-color: #f8d7da; padding: 2px 6px; border-radius: 4px; color: #842029; font-weight: bold; }
+        .highlight-blue { background-color: #d1e7dd; color: #0f5132; }
+        .highlight-yellow { background-color: #fff3cd; font-weight: bold; display: inline-block; }
+        .highlight-pink   { background-color: #f8d7da; color: #842029; font-weight: bold; }
         
-        .sub-text { font-size: 0.85rem; color: #8e8e93; margin-top: 4px; padding-left: 5px; }
+        .sub-text { font-size: 0.85rem; color: #8e8e93; margin-top: 4px; outline: none; }
+        
         .section-divider { 
-            background: #f1f3f5; text-align: left; font-size: 1.1rem; font-weight: bold;
-            padding: 6px 10px; margin: 20px 0 10px 0; border-radius: 6px; color: #495057;
+            font-size: 1.1rem; font-weight: bold; outline: none;
+            padding: 6px 10px; margin: 25px 0 15px 0; border-radius: 6px;
+        }
+        .divider-bg { background: #f1f3f5; color: #495057; }
+        .divider-center { text-align: center; background: none; }
+
+        /* 保存通知用トースト */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>エリア暗証番号</h1>
-        
-        <div class="status-container">
-            <div id="status" class="status">位置情報を取得中...</div>
-            <button class="retry-btn" onclick="manualRetry()">再試行</button>
+    <!-- 左側：サイドバー（手動切り替えタブ） -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span>エリア選択 (Bear風)</span>
+            <button onclick="manualRetry()" style="font-size:0.75rem; cursor:pointer;">GPS再捕捉</button>
+        </div>
+        <div id="tab-list" class="tab-list"></div>
+    </div>
+
+    <!-- 右側：メインエディタ -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div id="gps-status" class="status-badge">GPS初期化中...</div>
+            <span style="font-size:0.8rem; color:#8e8e93;">⚠️ 画面上の文字は直接タップして編集・書き換え可能です</span>
         </div>
         
-        <div id="result-area" style="display: none;">
-            <div id="building-name" class="building-title">---</div>
+        <div class="editor-container">
+            <!-- 直接編集可能な要素群 -->
+            <div id="building-name" class="editable-title" contenteditable="true" oninput="saveCurrentData()">---</div>
             <div id="codes-list"></div>
         </div>
     </div>
 
+    <!-- 自動保存の通知ポップアップ -->
+    <div id="toast" class="toast">変更を自動保存しました</div>
+
     <script>
         // ==========================================================================
-        // 【設定】空港データと逗子テストデータ
+        // 【初期データ】
         // ==========================================================================
-        const AREAS = [
+        const DEFAULT_AREAS = [
             {
+                id: "itm",
                 name: "大阪国際空港（伊丹空港 / ITM）", 
-                lat: 34.789539,  
-                lng: 135.438519,  
-                radiusKm: 4.0,    
+                lat: 34.789539, lng: 135.438519, radiusKm: 4.0,    
                 codes: [
-                    { type: "divider", text: "🇯🇵 O3 KKW : 2階" },
-                    { 
-                        label: "① KKWビル入口自動ドア", 
-                        code: "2485E", 
-                        style: "size-large weight-bold highlight-blue", 
-                        note: "↑レンタカー区画、関西airport(株)出入口も" 
-                    },
-                    { 
-                        label: "② KKW 3628", 
-                        code: "3628", 
-                        style: "size-normal weight-bold", 
-                        note: "↑ID使用可（ターミナル側ガラス扉）" 
-                    },
-                    { type: "divider", text: "ーー Dispatch Briefing ーー" },
-                    { 
-                        label: "④ 北従業員 検査場 通路", 
-                        code: "7244", 
-                        style: "size-large highlight-pink", 
-                        note: "（17番横） (~6/1 20:30頃)" 
-                    },
-                    { 
-                        label: "⑤ G, PBB", 
-                        code: "8471", 
-                        style: "size-xlarge highlight-pink", 
-                        note: "(5/1~)" 
-                    }
+                    { type: "divider", text: "🇯🇵 O3 KKW : 2階", style: "divider-bg" },
+                    { label: "① KKWビル入口自動ドア", code: "2485E", style: "size-large weight-bold highlight-blue", note: "↑レンタカー区画、関西airport(株)出入口も" },
+                    { label: "② KKW 3628", code: "3628", style: "size-normal weight-bold", note: "↑ID使用可（ターミナル側ガラス扉）" },
+                    { type: "divider", text: "ーー Dispatch Briefing ーー", style: "divider-center highlight-yellow" },
+                    { label: "④ 北従業員 検査場 通路", code: "7244", style: "size-large highlight-pink", note: "（17番横） (~6/1 20:30頃)" },
+                    { label: "⑤ G, PBB", code: "8471", style: "size-xlarge highlight-pink", note: "(5/1~)" }
                 ]
             },
             {
+                id: "zushi",
                 name: "現地テスト用（逗子7丁目周辺）",
-                lat: 34.960631, 
-                lng: 139.578641, 
-                radiusKm: 2.0, 
+                lat: 34.960631, lng: 139.578641, radiusKm: 2.0, 
                 codes: [
-                    { type: "divider", text: "🇯🇵 O3 KKW : 2階" },
-                    { 
-                        label: "① KKWビル入口自動ドア", 
-                        code: "2485E", 
-                        style: "size-large weight-bold highlight-blue", 
-                        note: "↑レンタカー区画、関西airport(株)出入口も" 
-                    },
-                    { 
-                        label: "② KKW 3628", 
-                        code: "3628", 
-                        style: "size-normal weight-bold", 
-                        note: "↑ID使用可（ターミナル側ガラス扉）" 
-                    },
-                    { type: "divider", text: "ーー Dispatch Briefing ーー" },
-                    { 
-                        label: "④ 北従業員 検査場 通路", 
-                        code: "7244", 
-                        style: "size-large highlight-pink", 
-                        note: "（17番横） (~6/1 20:30頃)" 
-                    },
-                    { 
-                        label: "⑤ G, PBB", 
-                        code: "8471", 
-                        style: "size-xlarge highlight-pink", 
-                        note: "(5/1~)" 
-                    }
+                    { type: "divider", text: "🇯🇵 O3 KKW : 2階", style: "divider-bg" },
+                    { label: "① KKWビル入口自動ドア", code: "2485E", style: "size-large weight-bold highlight-blue", note: "↑レンタカー区画、関西airport(株)出入口も" },
+                    { label: "② KKW 3628", code: "3628", style: "size-normal weight-bold", note: "↑ID使用可（ターミナル側ガラス扉）" },
+                    { type: "divider", text: "ーー Dispatch Briefing ーー", style: "divider-center highlight-yellow" },
+                    { label: "④ 北従業員 検査場 通路", code: "7244", style: "size-large highlight-pink", note: "（17番横） (~6/1 20:30頃)" },
+                    { label: "⑤ G, PBB", code: "8471", style: "size-xlarge highlight-pink", note: "(5/1~)" }
                 ]
             }
         ];
 
+        // iPad本体のストレージに保存されたデータを読み込む（なければ初期データを使用）
+        let AREAS = JSON.parse(localStorage.getItem('airport_codes_data')) || DEFAULT_AREAS;
+        let currentActiveId = AREAS[0].id; // 現在選択中の空港ID
         let watchId = null;
+        let saveTimeout = null;
 
+        // ==========================================================================
+        // 🛠️ 画面描画ロジック
+        // ==========================================================================
+        
+        // 左側サイドバー（タブ）の生成
+        function renderSidebar(activeId) {
+            const tabListEl = document.getElementById("tab-list");
+            tabListEl.innerHTML = "";
+            
+            AREAS.forEach(area => {
+                const item = document.createElement("div");
+                item.className = `tab-item ${area.id === activeId ? 'active' : ''}`;
+                item.onclick = () => selectTab(area.id);
+                
+                // 表示用テキストの整形
+                let shortName = area.name.split("（")[0];
+                item.innerHTML = `
+                    <div style="font-weight:600;">${shortName}</div>
+                    <div style="font-size:0.75rem; color:#8e8e93;">計 ${area.codes.filter(c => c.code).length} 件の暗証番号</div>
+                `;
+                tabListEl.appendChild(item);
+            });
+        }
+
+        // 右側エディタエリアの生成
+        function renderEditor(areaId) {
+            const areaData = AREAS.find(a => a.id === areaId);
+            if (!areaData) return;
+
+            currentActiveId = areaId;
+            document.getElementById("building-name").innerText = areaData.name;
+            
+            const listEl = document.getElementById("codes-list");
+            listEl.innerHTML = "";
+
+            areaData.codes.forEach((item, idx) => {
+                if (item.type === "divider") {
+                    const div = document.createElement("div");
+                    div.className = `section-divider ${item.style || 'divider-bg'}`;
+                    div.setAttribute("contenteditable", "true");
+                    div.innerText = item.text;
+                    // 入力されたらリアルタイム同期
+                    div.oninput = (e) => syncData(idx, 'text', e.target.innerText);
+                    listEl.appendChild(div);
+                } else {
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "code-item";
+                    
+                    itemDiv.innerHTML = `
+                        <div class="code-label" contenteditable="true" oninput="syncData(${idx}, 'label', this.innerText)">${item.label}</div>
+                        <div class="code-value ${item.style || 'size-normal'}" contenteditable="true" oninput="syncData(${idx}, 'code', this.innerText)">${item.code}</div>
+                        <div class="sub-text" contenteditable="true" oninput="syncData(${idx}, 'note', this.innerText)">${item.note || ''}</div>
+                    `;
+                    listEl.appendChild(itemDiv);
+                }
+            });
+        }
+
+        // タブを手動選択したとき
+        function selectTab(areaId) {
+            renderSidebar(areaId);
+            renderEditor(areaId);
+        }
+
+        // ==========================================================================
+        // 💾 エディタの編集・データ保存ロジック
+        // ==========================================================================
+        
+        // 画面上の変更をメモリ上の変数に同期
+        function syncData(index, field, value) {
+            const areaData = AREAS.find(a => a.id === currentActiveId);
+            if (areaData && areaData.codes[index]) {
+                areaData.codes[index][field] = value;
+                triggerAutoSave();
+            }
+        }
+
+        // タイトル部分の同期
+        function saveCurrentData() {
+            const areaData = AREAS.find(a => a.id === currentActiveId);
+            if (areaData) {
+                areaData.name = document.getElementById("building-name").innerText;
+                renderSidebar(currentActiveId); // サイドバーのタイトルも更新
+                triggerAutoSave();
+            }
+        }
+
+        // タイピングが終わってから500ms後にiPadのLocal組織に自動保存 (Bearと同じ挙動)
+        function triggerAutoSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                localStorage.setItem('airport_codes_data', JSON.stringify(AREAS));
+                showToast();
+            }, 500);
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 1500);
+        }
+
+        // ==========================================================================
+        // 🛰️ GPS連動ロジック
+        // ==========================================================================
         function getDistanceKm(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      document.title && Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        function updateUI(statusText, areaData = null, isError = false) {
-            const statusEl = document.getElementById("status");
-            const resultAreaEl = document.getElementById("result-area");
-            const nameEl = document.getElementById("building-name");
-            const listEl = document.getElementById("codes-list");
-
-            statusEl.innerText = statusText;
-            if (isError) { statusEl.classList.add("error"); return; }
-            statusEl.classList.remove("error");
-
-            if (areaData) {
-                nameEl.innerText = areaData.name;
-                listEl.innerHTML = "";
-
-                areaData.codes.forEach(item => {
-                    if (item.type === "divider") {
-                        const div = document.createElement("div");
-                        div.className = "section-divider";
-                        // 元のアプリ風に「ーー」の行は黄色ハイライトにする
-                        if (item.text.includes("ーー")) {
-                            div.innerHTML = `<span class="highlight-yellow">${item.text}</span>`;
-                            div.style.background = "none";
-                            div.style.textAlign = "center";
-                        } else {
-                            div.innerText = item.text;
-                        }
-                        listEl.appendChild(div);
-                    } else {
-                        const itemDiv = document.createElement("div");
-                        itemDiv.className = "code-item";
-                        let noteHtml = item.note ? `<div class="sub-text">${item.note}</div>` : "";
-                        
-                        itemDiv.innerHTML = `
-                            <div class="code-label">${item.label}</div>
-                            <div class="code-value ${item.style || 'size-normal'}">${item.code}</div>
-                            ${noteHtml}
-                        `;
-                        listEl.appendChild(itemDiv);
-                    }
-                });
-                resultAreaEl.style.display = "block";
-            } else {
-                resultAreaEl.style.display = "none";
-            }
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
         function startTracking() {
+            const statusEl = document.getElementById("gps-status");
             if (!("geolocation" in navigator)) {
-                updateUI("GPS非対応環境です。", null, true);
+                statusEl.innerText = "GPS非対応環境";
+                statusEl.className = "status-badge error";
                 return;
             }
-            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
 
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
-                    const accuracy = Math.round(position.coords.accuracy);
                     let matchedArea = null;
 
                     for (const area of AREAS) {
@@ -267,23 +369,31 @@
                     }
 
                     if (matchedArea) {
-                        updateUI(`位置特定（精度: 約${accuracy}m）`, matchedArea);
+                        statusEl.innerText = `📍 GPS連動中: ${matchedArea.name.split("（")[0]}`;
+                        statusEl.className = "status-badge gps-active";
+                        // GPSで引っかかったら、自動的にそのタブに切り替える
+                        if (currentActiveId !== matchedArea.id) {
+                            selectTab(matchedArea.id);
+                        }
                     } else {
-                        updateUI(`登録エリア外にいます（GPS精度: 約${accuracy}m）`);
+                        statusEl.innerText = "圏外 (手動セレクト中)";
+                        statusEl.className = "status-badge";
                     }
                 },
                 (error) => {
-                    updateUI("GPS信号を検索中、または許可が必要です。", null, true);
+                    statusEl.innerText = "📡 GPS信号なし (手動モード)";
+                    statusEl.className = "status-badge";
                 },
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
             );
         }
 
         function manualRetry() {
-            updateUI("現在地を再計算中...");
             startTracking();
         }
 
+        // 起動処理
+        selectTab(currentActiveId);
         startTracking();
     </script>
 </body>
