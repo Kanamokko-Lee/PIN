@@ -1,157 +1,49 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ビル暗証番号チェッカー</title>
-    <style>
-        /* 簡単なスマホ向けのデザイン調整 */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f5f5f7;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        h1 { font-size: 1.5rem; color: #333; margin-bottom: 20px; }
-        .status { font-size: 0.9rem; color: #888; margin-bottom: 30px; }
-        .building-name { font-size: 1.2rem; font-weight: bold; color: #0071e3; margin-bottom: 10px; }
-        .code-display { font-size: 3rem; font-weight: bold; letter-spacing: 5px; color: #1d1d1f; margin: 20px 0; }
-        .error { color: #ff3b30; }
-    </style>
-</head>
-<body>
-
-    <div class="card">
-        <h1>ビル暗証番号</h1>
-        <div id="status" class="status">位置情報を取得中...</div>
-        
-        <div id="result-area" style="display: none;">
-            <div id="building-name" class="building-name">---</div>
-            <div>現在の暗証番号</div>
-            <div id="code-display" class="code-display">----</div>
-        </div>
-    </div>
-
-    <script>
-        // ==========================================
-        // 【設定】ここに判定したいビルの位置情報を入力します
-        // ==========================================
-        const BUILDINGS = [
-            { 
-                name: "東京駅（テスト用サンプル）", 
-                lat: 35.681236, 
-                lng: 139.767125, 
-                code: "1234" 
+        // ==========================================================================
+        // 【設定】ここに事前に調べた「緯度・経度」と「暗証番号リスト」を入れます
+        // ==========================================================================
+        const AREAS = [
+            {
+                name: "大阪国際空港（伊丹空港 / ITM）", 
+                lat: 34.789539,  // 伊丹空港ターミナル付近の緯度
+                lng: 135.438519,  // 伊丹空港ターミナル付近の経度
+                radiusKm: 4.0,    // 判定半径（降機後すぐに拾えるよう4kmに設定）
+                codes: [
+                    { type: "divider", text: "🇯🇵 O3 KKW : 2階" },
+                    { 
+                        label: "① KKWビル入口自動ドア", 
+                        code: "2485E", 
+                        style: "size-large weight-bold", 
+                        note: "↑レンタカー区画、関西airport(株)出入口も" 
+                    },
+                    { 
+                        label: "② KKW", 
+                        code: "3628", 
+                        style: "size-normal", 
+                        note: "↑ID使用可（ターミナル側ガラス扉）" 
+                    },
+                    { type: "divider", text: "ーー Dispatch Briefing ーー" },
+                    { 
+                        label: "④ 北従業員 検査場 通路", 
+                        code: "7244", 
+                        style: "size-large weight-bold highlight-pink", 
+                        note: "（17番横） (~6/1 20:30頃)" 
+                    },
+                    { 
+                        label: "⑤ G, PBB", 
+                        code: "8471", 
+                        style: "size-xlarge weight-bold highlight-pink", 
+                        note: "(5/1~)" 
+                    }
+                ]
             },
-            { 
-                name: "大阪駅（テスト用サンプル）", 
-                lat: 34.702485, 
-                lng: 135.495951, 
-                code: "5678" 
+            {
+                name: "テスト用エリア（自宅・オフィスなど）",
+                lat: 35.681236, // テスト用に今いる場所の緯度を入れてください
+                lng: 139.767125, // テスト用に今いる場所の経度を入れてください
+                radiusKm: 2.0,
+                codes: [
+                    { label: "正面ゲート", code: "9999", style: "size-xlarge weight-bold highlight-yellow" },
+                    { label: "裏口ドア", code: "1234", style: "size-normal" }
+                ]
             }
-            // ※必要に応じてカンマ区切りで後ろに増やせます
         ];
-
-        // 判定する半径（メートル）。ビルからこの距離以内に入ったら表示
-        const DETECTION_RADIUS_METERS = 100; 
-
-        // 2点間の距離を計算する関数（ハバーサイン公式）
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // 地球の半径 (m)
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        // 画面の表示を書き換える関数
-        function updateUI(statusText, buildingName = null, code = null, isError = false) {
-            const statusEl = document.getElementById("status");
-            const resultAreaEl = document.getElementById("result-area");
-            const nameEl = document.getElementById("building-name");
-            const codeEl = document.getElementById("code-display");
-
-            statusEl.innerText = statusText;
-            if (isError) {
-                statusEl.classList.add("error");
-                resultAreaEl.style.display = "none";
-                return;
-            }
-
-            statusEl.classList.remove("error");
-            if (buildingName && code) {
-                nameEl.innerText = buildingName;
-                codeEl.innerText = code;
-                resultAreaEl.style.display = "block";
-            } else {
-                resultAreaEl.style.display = "none";
-            }
-        }
-
-        // メインの位置情報追跡処理
-        function startTracking() {
-            if (!("geolocation" in navigator)) {
-                updateUI("お使いのブラウザはGPSに対応していません。", null, null, true);
-                return;
-            }
-
-            // リアルタイムで位置を監視
-            navigator.geolocation.watchPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    
-                    let nearBuilding = null;
-
-                    // 登録されているビルをループして距離を計算
-                    for (const building of BUILDINGS) {
-                        const distance = getDistance(userLat, userLng, building.lat, building.lng);
-                        
-                        if (distance <= DETECTION_RADIUS_METERS) {
-                            nearBuilding = building;
-                            break; // 該当するビルが見つかったらループを抜ける
-                        }
-                    }
-
-                    if (nearBuilding) {
-                        updateUI("周辺に対象ビルが見つかりました", nearBuilding.name, nearBuilding.code);
-                    } else {
-                        updateUI("登録されたビルの周辺にいません（自動待機中）");
-                    }
-                },
-                (error) => {
-                    let errorMsg = "位置情報の取得に失敗しました。";
-                    if (error.code === 1) errorMsg = "位置情報の利用を許可してください。";
-                    updateUI(errorMsg, null, null, true);
-                },
-                {
-                    enableHighAccuracy: true, // GPS精度を最優先
-                    maximumAge: 0,            // キャッシュされた位置情報は使わない
-                    timeout: 10000            // 10秒でタイムアウト
-                }
-            );
-        }
-
-        // アプリ起動時に追跡を開始
-        startTracking();
-    </script>
-</body>
-</html>
