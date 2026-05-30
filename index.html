@@ -109,13 +109,14 @@
         }
         .rename-btn:hover { opacity: 1; }
         .tab-title-input {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             border: 1px solid #0071e3;
             background: #fff;
             outline: none;
-            width: 90%;
+            width: 95%;
             padding: 2px;
             border-radius: 4px;
+            text-align: center;
         }
 
         /* ② 右側：メインコンテンツ */
@@ -194,7 +195,7 @@
             min-height: 350px;
             line-height: 1.6;
             font-size: 1.05rem;
-            padding-bottom: 60px;
+            padding-bottom: 120px; /* 下部ツールバーの余白を多めに確保 */
         }
         .map-img {
             max-width: 100%;
@@ -204,7 +205,7 @@
             border-radius: 8px;
         }
 
-        /* 💾 最下部に固定された文字装飾コントロールバー */
+        /* 💾 最下部に固定された文字装飾コントロールバー（デフォルトは最下部ぴったり） */
         .bottom-toolbar {
             position: absolute;
             bottom: 0;
@@ -221,6 +222,7 @@
             gap: 6px;
             padding: 0 10px;
             z-index: 5;
+            transition: bottom 0.3s ease;
         }
         .toolbar-item {
             border: none;
@@ -260,6 +262,7 @@
             z-index: 99;
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: bottom 0.3s ease;
         }
 
         .toast {
@@ -273,20 +276,26 @@
             font-size: 0.85rem;
             display: none;
             z-index: 1000;
+            transition: bottom 0.3s ease;
         }
 
         /* 📱 スマートフォン（iPhone）最適化表示 */
         @media screen and (max-width: 768px) {
             .sidebar { width: 52px; }
             .sidebar-header { padding: 8px 2px; flex-direction: column; gap: 4px; }
-            .sidebar-header span, .tab-meta, .rename-btn { display: none !important; }
+            .sidebar-header span, .tab-meta, .rename-btn { display: none !important; } /* iPhone時は通常表示の鉛筆ボタンを非表示化 */
             .sidebar-header button { font-size: 0.55rem; padding: 1px 2px; width: 100%; text-align: center; }
-            .tab-item { padding: 12px 2px; justify-content: center; text-align: center; font-size: 0.8rem; }
-            .tab-title-text { font-size: 0.8rem; text-align: center; width: 100%; }
+            .tab-item { padding: 12px 2px; justify-content: center; text-align: center; font-size: 0.8rem; position: relative; }
+            .tab-title-text { font-size: 0.8rem; text-align: center; width: 100%; display: block; }
             
             .editor-container { padding: 15px 12px; }
             .top-bar { padding: 8px 10px; }
-            .bottom-toolbar { height: 46px; gap: 4px; padding: 0 4px; }
+            
+            /* 📸 対策：iPhone（Safari）のURLバーに被らないよう、コントロール位置を50px上に浮かせる */
+            .bottom-toolbar { bottom: 50px; height: 46px; gap: 4px; padding: 0 4px; border-bottom: 1px solid #e5e5ea; }
+            .toggle-sidebar-trigger { bottom: 110px; }
+            .toast { bottom: 110px; }
+            
             .toolbar-item { padding: 4px 6px; font-size: 0.75rem; }
             select.toolbar-item { padding: 4px 2px; }
         }
@@ -349,7 +358,6 @@
     <div id="toast" class="toast">保存されました</div>
 
     <script>
-        // 📸 画像から一字一句正確に再現した初期マスターデータ
         const DEFAULT_AREAS = [
             { id: "hnd", name: "🇯🇵G3 ビル: 44119# 3階", short: "HND", lat: 35.549225, lng: 139.784432, radiusKm: 5.0, body: `Dispatch後<br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">4階</span> ＋ ターミナル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3階</span><br><br>DOM <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 31383#</span> ,<br><br>INT <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 81611#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35#9<br><br>2026/5/1リバイス<br><br><br><img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="HND-MAP">` },
             { id: "itm", name: "🇯🇵O3 KKW:2階", short: "ITM", lat: 34.789539, lng: 135.438519, radiusKm: 4.0, body: `①KKWビル入口自動ドア：<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold; font-size: large;">2485E</span><br>↑レンタカー区画、関西airport(株)出入口も<br><br>②KKW <span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3628</span><br>&nbsp;&nbsp;&nbsp;&nbsp;↑ID使用可(ターミナル側ガラス扉)<br><br><span style="background-color: rgb(255, 243, 205); color: rgb(102, 77, 3); font-weight: bold;">ーー Dispatch Briefing ーー</span><br><br>④北従業員 <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">検査場</span> 通路：<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold; font-size: large;">7244</span><br>&nbsp;&nbsp;&nbsp;&nbsp;(17番横)　(~6/1 20:30頃)<br><br>⑤ <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G, PBB : 8471</span> (5/1~)<br><br>2026/5/1　リバイス` },
@@ -446,6 +454,7 @@
 
         // ✍️ エディタ・タブ描画
         function execCmd(command, value = null) { document.execCommand(command, false, value); saveBodyChange(); }
+        
         function renderSidebar(activeId) {
             const listEl = document.getElementById("tab-list"); if (!listEl) return;
             listEl.innerHTML = ""; const isMobile = window.innerWidth <= 768;
@@ -453,40 +462,81 @@
                 const item = document.createElement("div");
                 item.className = `tab-item ${area.id === activeId ? 'active' : ''}`;
                 item.setAttribute("draggable", "true"); item.setAttribute("data-index", index);
+                
                 item.addEventListener('dragstart', handleDragStart); item.addEventListener('dragover', handleDragOver);
                 item.addEventListener('drop', handleDrop); item.addEventListener('dragend', handleDragEnd);
                 item.addEventListener('touchstart', handleTouchStart, {passive: true}); item.addEventListener('touchmove', handleTouchMove, {passive: true});
-                item.onclick = (e) => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return; selectTab(area.id); };
+                
+                // 📱 タップ時の挙動
+                item.onclick = (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+                    if (area.id === currentActiveId && isMobile) {
+                        // iPhoneで「現在選択中のタブ」を再度タップしたらインライン編集を起動
+                        enableTabRename(area.id, e);
+                    } else {
+                        selectTab(area.id);
+                    }
+                };
+
                 const titleText = isMobile ? (area.short || area.name.substring(0, 3)) : area.name;
                 const metaText = isMobile ? "" : `<span class="tab-meta">${area.radiusKm}km 監視</span>`;
-                item.innerHTML = `<div class="tab-title-area" id="title-container-${area.id}"><span class="tab-title-text" style="font-weight:600;">${titleText}</span>${metaText}</div><button class="rename-btn" onclick="enableTabRename('${area.id}', event)">📝</button>`;
+                
+                item.innerHTML = `
+                    <div class="tab-title-area" id="title-container-${area.id}">
+                        <span class="tab-title-text" style="font-weight:600;">${titleText}</span>
+                        ${metaText}
+                    </div>
+                    <button class="rename-btn" onclick="enableTabRename('${area.id}', event)">📝</button>
+                `;
                 listEl.appendChild(item);
             });
         }
 
+        // 📱 タブ名のインライン書き換えシステム（iPhoneの狭い幅でも確実に動作）
         function enableTabRename(areaId, event) {
-            event.stopPropagation(); const areaData = AREAS.find(a => a.id === areaId);
-            const container = document.getElementById(`title-container-${areaId}`); if (!areaData || !container) return;
-            const isMobile = window.innerWidth <= 768; const currentVal = isMobile ? (areaData.short || areaData.name.substring(0,3)) : areaData.name;
-            const input = document.createElement('input'); input.type = 'text'; input.className = 'tab-title-input'; input.value = currentVal;
+            if(event) event.stopPropagation();
+            const areaData = AREAS.find(a => a.id === areaId);
+            const container = document.getElementById(`title-container-${areaId}`);
+            if (!areaData || !container) return;
+
+            const isMobile = window.innerWidth <= 768;
+            const currentVal = isMobile ? (areaData.short || areaData.name.substring(0,3)) : areaData.name;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'tab-title-input';
+            input.value = currentVal;
+            
             const finishRename = () => {
                 const val = input.value.trim();
                 if (val !== "") {
-                    if (isMobile) areaData.short = val;
-                    else { areaData.name = val; if (currentActiveId === areaId) document.getElementById("building-name").innerText = val; }
+                    if (isMobile) {
+                        areaData.short = val; // iPhone時は3文字コード側を更新
+                    } else {
+                        areaData.name = val;
+                        if (currentActiveId === areaId) {
+                            document.getElementById("building-name").innerText = val;
+                        }
+                    }
                     triggerStorage();
                 }
                 renderSidebar(currentActiveId);
             };
-            input.onblur = finishRename; input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); };
-            container.innerHTML = ''; container.appendChild(input); input.focus();
+
+            input.onblur = finishRename;
+            input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); };
+
+            container.innerHTML = '';
+            container.appendChild(input);
+            input.focus();
+            if(input.setSelectionRange) input.setSelectionRange(0, input.value.length);
         }
 
         function promptRenameCurrent() {
             const areaData = AREAS.find(a => a.id === currentActiveId); if (!areaData) return;
             const isMobile = window.innerWidth <= 768;
             if (isMobile) {
-                const newShort = prompt("iPhone用の3文字コードを入力してください:", areaData.short);
+                const newShort = prompt("iPhone用の表示コード(3〜4文字など)を入力してください:", areaData.short || areaData.name.substring(0,3));
                 if (newShort && newShort.trim() !== "") { areaData.short = newShort.trim(); triggerStorage(); renderSidebar(currentActiveId); }
             } else {
                 const newName = prompt("新しい空港・拠点名を入力してください:", areaData.name);
