@@ -1,5 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空港・ビル暗証番号チェッカー</title>
+    <style>
+        /* スマホ・iPad向けのクリーンなデザイン */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f5f7;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        h1 { font-size: 1.3rem; color: #1d1d1f; text-align: center; margin-top: 0; margin-bottom: 15px; }
+        
+        /* ステータスとリトライボタン */
+        .status-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e5e5ea;
+            padding: 10px 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .status { font-size: 0.85rem; color: #48484a; flex: 1; padding-right: 10px; }
+        .error { color: #ff3b30; font-weight: bold; }
+        .retry-btn {
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .retry-btn:active { background-color: #005bb5; }
+
+        .building-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #1d1d1f;
+            border-bottom: 2px solid #0071e3;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* 各暗証番号のレイアウト */
+        .code-item {
+            margin-bottom: 16px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #e5e5ea;
+        }
+        .code-label {
+            font-size: 0.95rem;
+            color: #3a3a3c;
+            margin-bottom: 4px;
+        }
+        .code-value {
+            display: inline-block;
+        }
+
+        /* 元のメモの見た目を再現する装飾クラス */
+        .size-normal { font-size: 1.1rem; }
+        .size-large  { font-size: 1.5rem; }
+        .size-xlarge { font-size: 2.0rem; }
+        .weight-bold { font-weight: bold; }
+        
+        .highlight-blue { background-color: #d1e7dd; padding: 2px 6px; border-radius: 4px; color: #0f5132; }
+        .highlight-yellow { background-color: #fff3cd; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
+        .highlight-pink   { background-color: #f8d7da; padding: 2px 6px; border-radius: 4px; color: #842029; font-weight: bold; }
+        
+        .sub-text { font-size: 0.85rem; color: #8e8e93; margin-top: 4px; padding-left: 5px; }
+        .section-divider { 
+            background: #f1f3f5; text-align: left; font-size: 1.1rem; font-weight: bold;
+            padding: 6px 10px; margin: 20px 0 10px 0; border-radius: 6px; color: #495057;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>エリア暗証番号</h1>
+        
+        <div class="status-container">
+            <div id="status" class="status">位置情報を取得中...</div>
+            <button class="retry-btn" onclick="manualRetry()">再試行</button>
+        </div>
+        
+        <div id="result-area" style="display: none;">
+            <div id="building-name" class="building-title">---</div>
+            <div id="codes-list"></div>
+        </div>
+    </div>
+
+    <script>
         // ==========================================================================
-        // 【設定】ここに事前に調べた「緯度・経度」と「暗証番号リスト」を入れます
+        // 【設定】空港データと逗子テストデータ
         // ==========================================================================
         const AREAS = [
             {
@@ -12,63 +125,166 @@
                     { 
                         label: "① KKWビル入口自動ドア", 
                         code: "2485E", 
-                        style: "size-large weight-bold", 
+                        style: "size-large weight-bold highlight-blue", 
                         note: "↑レンタカー区画、関西airport(株)出入口も" 
                     },
                     { 
-                        label: "② KKW", 
+                        label: "② KKW 3628", 
                         code: "3628", 
-                        style: "size-normal", 
+                        style: "size-normal weight-bold", 
                         note: "↑ID使用可（ターミナル側ガラス扉）" 
                     },
                     { type: "divider", text: "ーー Dispatch Briefing ーー" },
                     { 
                         label: "④ 北従業員 検査場 通路", 
                         code: "7244", 
-                        style: "size-large weight-bold highlight-pink", 
+                        style: "size-large highlight-pink", 
                         note: "（17番横） (~6/1 20:30頃)" 
                     },
                     { 
                         label: "⑤ G, PBB", 
                         code: "8471", 
-                        style: "size-xlarge weight-bold highlight-pink", 
+                        style: "size-xlarge highlight-pink", 
                         note: "(5/1~)" 
                     }
                 ]
             },
             {
-                // 【テスト用】逗子7丁目の半径2km圏内に入ると、伊丹のデータが表示されます
                 name: "現地テスト用（逗子7丁目周辺）",
                 lat: 34.960631, 
                 lng: 139.578641, 
-                radiusKm: 2.0, // 逗子駅から約2km圏内なら反応します
+                radiusKm: 2.0, 
                 codes: [
-                    { type: "divider", text: "【テスト画面】伊丹空港と同じデータ構造です" },
+                    { type: "divider", text: "🇯🇵 O3 KKW : 2階" },
                     { 
                         label: "① KKWビル入口自動ドア", 
                         code: "2485E", 
-                        style: "size-large weight-bold", 
+                        style: "size-large weight-bold highlight-blue", 
                         note: "↑レンタカー区画、関西airport(株)出入口も" 
                     },
                     { 
-                        label: "② KKW", 
+                        label: "② KKW 3628", 
                         code: "3628", 
-                        style: "size-normal", 
+                        style: "size-normal weight-bold", 
                         note: "↑ID使用可（ターミナル側ガラス扉）" 
                     },
                     { type: "divider", text: "ーー Dispatch Briefing ーー" },
                     { 
                         label: "④ 北従業員 検査場 通路", 
                         code: "7244", 
-                        style: "size-large weight-bold highlight-pink", 
+                        style: "size-large highlight-pink", 
                         note: "（17番横） (~6/1 20:30頃)" 
                     },
                     { 
                         label: "⑤ G, PBB", 
                         code: "8471", 
-                        style: "size-xlarge weight-bold highlight-pink", 
+                        style: "size-xlarge highlight-pink", 
                         note: "(5/1~)" 
                     }
                 ]
             }
         ];
+
+        let watchId = null;
+
+        function getDistanceKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      document.title && Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function updateUI(statusText, areaData = null, isError = false) {
+            const statusEl = document.getElementById("status");
+            const resultAreaEl = document.getElementById("result-area");
+            const nameEl = document.getElementById("building-name");
+            const listEl = document.getElementById("codes-list");
+
+            statusEl.innerText = statusText;
+            if (isError) { statusEl.classList.add("error"); return; }
+            statusEl.classList.remove("error");
+
+            if (areaData) {
+                nameEl.innerText = areaData.name;
+                listEl.innerHTML = "";
+
+                areaData.codes.forEach(item => {
+                    if (item.type === "divider") {
+                        const div = document.createElement("div");
+                        div.className = "section-divider";
+                        // 元のアプリ風に「ーー」の行は黄色ハイライトにする
+                        if (item.text.includes("ーー")) {
+                            div.innerHTML = `<span class="highlight-yellow">${item.text}</span>`;
+                            div.style.background = "none";
+                            div.style.textAlign = "center";
+                        } else {
+                            div.innerText = item.text;
+                        }
+                        listEl.appendChild(div);
+                    } else {
+                        const itemDiv = document.createElement("div");
+                        itemDiv.className = "code-item";
+                        let noteHtml = item.note ? `<div class="sub-text">${item.note}</div>` : "";
+                        
+                        itemDiv.innerHTML = `
+                            <div class="code-label">${item.label}</div>
+                            <div class="code-value ${item.style || 'size-normal'}">${item.code}</div>
+                            ${noteHtml}
+                        `;
+                        listEl.appendChild(itemDiv);
+                    }
+                });
+                resultAreaEl.style.display = "block";
+            } else {
+                resultAreaEl.style.display = "none";
+            }
+        }
+
+        function startTracking() {
+            if (!("geolocation" in navigator)) {
+                updateUI("GPS非対応環境です。", null, true);
+                return;
+            }
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const accuracy = Math.round(position.coords.accuracy);
+                    let matchedArea = null;
+
+                    for (const area of AREAS) {
+                        const distance = getDistanceKm(userLat, userLng, area.lat, area.lng);
+                        if (distance <= area.radiusKm) {
+                            matchedArea = area;
+                            break;
+                        }
+                    }
+
+                    if (matchedArea) {
+                        updateUI(`位置特定（精度: 約${accuracy}m）`, matchedArea);
+                    } else {
+                        updateUI(`登録エリア外にいます（GPS精度: 約${accuracy}m）`);
+                    }
+                },
+                (error) => {
+                    updateUI("GPS信号を検索中、または許可が必要です。", null, true);
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+            );
+        }
+
+        function manualRetry() {
+            updateUI("現在地を再計算中...");
+            startTracking();
+        }
+
+        startTracking();
+    </script>
+</body>
+</html>
