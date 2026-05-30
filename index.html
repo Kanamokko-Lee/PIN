@@ -4,9 +4,9 @@
         const AREAS = [
             {
                 name: "大阪国際空港（伊丹空港 / ITM）", 
-                lat: 34.789539,  // 伊丹空港ターミナル付近の緯度
-                lng: 135.438519,  // 伊丹空港ターミナル付近の経度
-                radiusKm: 4.0,    // 判定半径（降機後すぐに拾えるよう4kmに設定）
+                lat: 34.789539,  
+                lng: 135.438519,  
+                radiusKm: 4.0,    
                 codes: [
                     { type: "divider", text: "🇯🇵 O3 KKW : 2階" },
                     { 
@@ -37,13 +37,38 @@
                 ]
             },
             {
-                name: "テスト用エリア（自宅・オフィスなど）",
-                lat: 35.681236, // テスト用に今いる場所の緯度を入れてください
-                lng: 139.767125, // テスト用に今いる場所の経度を入れてください
-                radiusKm: 2.0,
+                // 【テスト用】逗子7丁目の半径2km圏内に入ると、伊丹のデータが表示されます
+                name: "現地テスト用（逗子7丁目周辺）",
+                lat: 34.960631, 
+                lng: 139.578641, 
+                radiusKm: 2.0, // 逗子駅から約2km圏内なら反応します
                 codes: [
-                    { label: "正面ゲート", code: "9999", style: "size-xlarge weight-bold highlight-yellow" },
-                    { label: "裏口ドア", code: "1234", style: "size-normal" }
+                    { type: "divider", text: "【テスト画面】伊丹空港と同じデータ構造です" },
+                    { 
+                        label: "① KKWビル入口自動ドア", 
+                        code: "2485E", 
+                        style: "size-large weight-bold", 
+                        note: "↑レンタカー区画、関西airport(株)出入口も" 
+                    },
+                    { 
+                        label: "② KKW", 
+                        code: "3628", 
+                        style: "size-normal", 
+                        note: "↑ID使用可（ターミナル側ガラス扉）" 
+                    },
+                    { type: "divider", text: "ーー Dispatch Briefing ーー" },
+                    { 
+                        label: "④ 北従業員 検査場 通路", 
+                        code: "7244", 
+                        style: "size-large weight-bold highlight-pink", 
+                        note: "（17番横） (~6/1 20:30頃)" 
+                    },
+                    { 
+                        label: "⑤ G, PBB", 
+                        code: "8471", 
+                        style: "size-xlarge weight-bold highlight-pink", 
+                        note: "(5/1~)" 
+                    }
                 ]
             }
         ];
