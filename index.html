@@ -95,7 +95,7 @@
         .f-bold   { font-weight: bold; }
         .map-img  { max-width: 100%; height: auto; margin-top: 15px; border-radius: 6px; }
 
-        .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; display: none; z-index: 1000; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
@@ -140,47 +140,67 @@
         let currentActiveId = CURRENT_DATABASE[0].id;
         let saveTimeout = null;
 
-        // URLから送られてきたBearデータを自動で解析・上書き保存する関数
+        // 🚀 強化版：ショートカットから送られてくるプレーンテキストを完璧に仕分けるインポートエンジン
         function checkUrlImport() {
             const urlParams = new URLSearchParams(window.location.search);
             const rawText = urlParams.get('importData');
             
             if (rawText) {
-                // シャープ記号を基準に各ノートへ分解
-                const chunks = rawText.split(/(?=\n#\s|\n##\s|^#\s|^##\s)/g);
+                // メモ全体のテキストを行ごとに分解
+                const lines = rawText.split('\n');
+                let currentChunk = [];
+                let currentStationId = null;
+                let currentTitle = "";
                 let importCount = 0;
 
-                chunks.forEach(chunk => {
-                    const trimmed = chunk.trim();
-                    if(!trimmed) return;
+                function saveLastChunk() {
+                    if (currentStationId && currentChunk.length > 0) {
+                        const record = CURRENT_DATABASE.find(r => r.id === currentStationId);
+                        if (record) {
+                            record.name = currentTitle;
+                            // 1行目をボールドにして全体をドッキング
+                            record.content = `<b>${currentTitle}</b>\n` + currentChunk.join('\n');
+                            importCount++;
+                        }
+                    }
+                }
 
-                    const lines = trimmed.split("\n");
-                    let title = lines[0].replace(/^#+\s*/, "").trim();
-                    if(!title) return;
-
+                // 行を上から走査して、空港キーワードが含まれる行を「メモの始まり」として自動検知
+                lines.forEach(line => {
                     let matchedId = null;
+                    let cleanLine = line.replace(/^#+\s*/, "").trim(); // シャープ等を除去
+
                     for (const [id, target] of Object.entries(STATION_COORDINATES)) {
-                        if (target.keywords.some(k => title.includes(k))) {
+                        if (target.keywords.some(k => cleanLine.startsWith(k) || (cleanLine.includes(k) && cleanLine.length < 30))) {
                             matchedId = id;
                             break;
                         }
                     }
 
                     if (matchedId) {
-                        const record = CURRENT_DATABASE.find(r => r.id === matchedId);
-                        if (record) {
-                            record.name = title;
-                            record.content = lines.map((line, i) => i === 0 ? `<b>${line.replace(/^#+\s*/, "")}</b>` : line).join("\n");
-                            importCount++;
+                        // 次の空港のデータが始まったので、前の空港分を保存
+                        saveLastChunk();
+                        currentStationId = matchedId;
+                        currentTitle = cleanLine;
+                        currentChunk = [];
+                    } else {
+                        // 空港タイトル以外の行は本文として蓄積
+                        if (currentStationId) {
+                            currentChunk.push(line);
                         }
                     }
                 });
+                
+                // 最後の1件を保存
+                saveLastChunk();
 
                 if (importCount > 0) {
                     localStorage.setItem('airport_pin_db_v3', JSON.stringify(CURRENT_DATABASE));
-                    // URLパラメータを綺麗に消去してリダイレクト（リロード無限ループ防止）
+                    // URLを綺麗にリセット
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    showToast(`🔄 Bearから ${importCount} 件のデータを自動同期しました！`);
+                    alert(`🔄 Bearから ${importCount} 件のデータを自動同期しました！`);
+                } else {
+                    alert("⚠️ データの解析に失敗しました。Bearのノートタイトルに『O3』『F2』『HND』などのキーワードが入っているか確認してください。");
                 }
             }
         }
@@ -290,7 +310,7 @@
         function manualRetry() { startGpsTracking(); }
         window.addEventListener('resize', () => renderSidebar(currentActiveId));
 
-        // 初期キック時にインポートチェックを実行
+        // 初期起動時にインポートチェック
         checkUrlImport();
         selectTab(currentActiveId);
         startGpsTracking();
