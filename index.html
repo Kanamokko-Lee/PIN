@@ -16,19 +16,22 @@
             box-sizing: border-box;
         }
 
-        /* サイドバー (Bear風) */
+        /* ==========================================
+           📱 レスポンシブ対応：サイドバー基本設定
+           ========================================== */
         .sidebar {
-            width: 320px;
+            width: 260px; /* PC・iPadでの標準幅 */
             background: #f9f9fb;
             border-right: 1px solid #e5e5ea;
             display: flex;
             flex-direction: column;
             height: 100%;
             flex-shrink: 0;
+            transition: width 0.3s ease;
         }
         .sidebar-header {
-            padding: 15px;
-            font-size: 0.9rem;
+            padding: 12px 15px;
+            font-size: 0.8rem;
             font-weight: bold;
             color: #8e8e93;
             border-bottom: 1px solid #e5e5ea;
@@ -36,20 +39,21 @@
             justify-content: space-between;
             align-items: center;
             background: #fff;
+            white-space: nowrap;
         }
         .tab-list {
             overflow-y: auto;
             flex: 1;
         }
         .tab-item {
-            padding: 14px 18px;
+            padding: 14px 15px;
             cursor: pointer;
             border-bottom: 1px solid #f1f1f4;
             font-size: 0.95rem;
             color: #3a3a3c;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
             transition: background 0.2s;
         }
         .tab-item:hover { background-color: #f1f1f4; }
@@ -59,13 +63,44 @@
             color: #1d1d1f;
         }
         .tab-meta {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #8e8e93;
-            display: flex;
-            justify-content: space-between;
         }
 
-        /* メインエリア */
+        /* iPhone（画面幅が狭い時）のスタイル上書き */
+        @media screen and (max-width: 768px) {
+            .sidebar {
+                width: 65px; /* 3〜4文字分だけ残して極細に */
+            }
+            .sidebar-header span, .tab-meta {
+                display: none; /* 不要なテキストを非表示 */
+            }
+            .sidebar-header {
+                padding: 10px 5px;
+                justify-content: center;
+            }
+            .sidebar-header button {
+                font-size: 0.6rem;
+                padding: 2px 4px;
+            }
+            .tab-item {
+                padding: 15px 5px;
+                align-items: center;
+                text-align: center;
+            }
+            /* タブ名を最初の4文字（国旗＋コード等）で切り抜くための設定 */
+            .tab-title-text {
+                font-size: 0.85rem;
+                display: block;
+                width: 100%;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+        }
+
+        /* ==========================================
+           メインエリア & エディタ
+           ========================================== */
         .main-content {
             flex: 1;
             background: white;
@@ -75,16 +110,16 @@
             overflow: hidden;
         }
         .top-bar {
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-bottom: 1px solid #e5e5ea;
             background: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 0.75rem;
         }
         .status-badge {
-            font-size: 0.8rem;
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 12px;
             background: #e5e5ea;
             color: #48484a;
@@ -92,51 +127,46 @@
         }
         .status-badge.gps-active { background: #d1e7dd; color: #0f5132; }
 
-        /* エディタ */
         .editor-container {
             flex: 1;
-            padding: 30px 40px;
+            padding: 20px;
             overflow-y: auto;
             box-sizing: border-box;
         }
-        .editable-title {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #1d1d1f;
-            border-bottom: 2px solid #0071e3;
-            padding-bottom: 8px;
-            margin-bottom: 20px;
-            outline: none;
-        }
         
-        /* 編集・エディタ要素の汎用スタイル */
-        .edit-block {
+        /* 編集・エディタ要素（1枚の紙のように全行編集可能に） */
+        .editable-body {
             outline: none;
-            min-height: 1.2em;
-            margin-bottom: 8px;
-            line-height: 1.5;
+            min-height: 80%;
+            line-height: 1.6;
             white-space: pre-wrap;
+            font-size: 1rem;
+            color: #1d1d1f;
         }
         
-        /* 装飾クラス (文字サイズ・太さ) */
-        .f-normal { font-size: 1.05rem; }
-        .f-large  { font-size: 1.3rem; }
-        .f-xlarge { font-size: 1.8rem; }
+        /* Bear風デコレーション */
+        .m-blue   { background-color: #d1e7dd; color: #0f5132; padding: 1px 4px; border-radius: 4px; font-weight: bold; }
+        .m-yellow { background-color: #fff3cd; color: #664d03; padding: 1px 4px; border-radius: 4px; font-weight: bold; }
+        .m-pink   { background-color: #f8d7da; color: #842029; padding: 1px 4px; border-radius: 4px; font-weight: bold; }
+        .m-gray   { background-color: #e2e3e5; color: #41464b; padding: 1px 4px; border-radius: 4px; }
+        .f-large  { font-size: 1.25rem; }
         .f-bold   { font-weight: bold; }
-        
-        /* マーカー色（Bearアプリ再現） */
-        .m-blue   { background-color: #d1e7dd; color: #0f5132; padding: 2px 6px; border-radius: 4px; }
-        .m-yellow { background-color: #fff3cd; color: #664d03; padding: 2px 6px; border-radius: 4px; }
-        .m-pink   { background-color: #f8d7da; color: #842029; padding: 2px 6px; border-radius: 4px; }
-        .m-gray   { background-color: #e2e3e5; color: #41464b; padding: 2px 6px; border-radius: 4px; }
-        
-        /* 画像スタイル */
-        .map-img {
-            max-width: 100%;
-            height: auto;
-            margin-top: 15px;
-            border: 1px solid #e5e5ea;
-            border-radius: 8px;
+        .map-img  { max-width: 100%; height: auto; margin-top: 15px; border-radius: 6px; }
+
+        /* 同期・管理用セクション */
+        .sync-section {
+            background: #f5f5f7;
+            padding: 15px;
+            border-top: 1px solid #e5e5ea;
+            font-size: 0.8rem;
+        }
+        .sync-textarea {
+            width: 100%;
+            height: 60px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            box-sizing: border-box;
+            margin-top: 5px;
         }
 
         .toast {
@@ -145,9 +175,9 @@
             right: 20px;
             background: rgba(0,0,0,0.8);
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
             display: none;
             z-index: 1000;
         }
@@ -157,201 +187,164 @@
 
     <div class="sidebar">
         <div class="sidebar-header">
-            <span>STATION LIST</span>
-            <button onclick="manualRetry()" style="font-size:0.75rem; cursor:pointer; padding:2px 6px;">GPS再捕捉</button>
+            <span>STATION</span>
+            <button onclick="manualRetry()">GPS再捕</button>
         </div>
         <div id="tab-list" class="tab-list"></div>
     </div>
 
     <div class="main-content">
         <div class="top-bar">
-            <div id="gps-status" class="status-badge">GPS初期化中...</div>
-            <span style="font-size:0.75rem; color:#8e8e93;">⚠️ すべての文字は直接タップして自由に書き換え・編集可能です</span>
+            <div id="gps-status" class="status-badge">GPS接続中...</div>
+            <span style="color:#8e8e93; font-size:0.7rem;">タップして直接編集可能（自動保存）</span>
         </div>
         
         <div class="editor-container">
-            <div id="building-name" class="editable-title" contenteditable="true" oninput="saveTitleChange()">---</div>
-            <div id="editor-body" class="edit-block f-normal" contenteditable="true" oninput="saveBodyChange()"></div>
+            <div id="editor-body" class="editable-body" contenteditable="true" oninput="saveContentChange()"></div>
+        </div>
+
+        <div class="sync-section">
+            <details>
+                <summary style="cursor:pointer; font-weight:bold; color:#0071e3;">⚙️ 外部データ同期 / バックアップ (JSON)</summary>
+                <p style="margin:5px 0;">全ステーションの全データを下のテキストエリアにJSONとして出力しています。PCへの移行やBearとのデータ同期にご活用ください。</p>
+                <button onclick="exportData()">最新データを読込出力</button>
+                <button onclick="importData()" style="background:#0071e3; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer;">下のデータに書き換え適用</button>
+                <textarea id="sync-io" class="sync-textarea" placeholder="ここにJSONデータを貼り付けてインポートも可能"></textarea>
+            </details>
         </div>
     </div>
 
-    <div id="toast" class="toast">変更を自動保存しました</div>
+    <div id="toast" class="toast">保存しました</div>
 
     <script>
         // ==========================================================================
-        // 【全空港初期データベース】
-        // 各ステーションの正確な緯度・経度と、画像データをすべて注入済みです。
+        // 🛰️ 位置情報ターゲット定義 (緯度・経度・判定半径)
+        // データ本体（文章）とは分離し、位置ジャンプのトリガーとして管理します。
         // ==========================================================================
-        const DEFAULT_AREAS = [
-            {
-                id: "itm",
-                name: "🇯🇵O3 KKW:2階",
-                // 伊丹空港 端末近辺 (半径4km)
-                lat: 34.789539, lng: 135.438519, radiusKm: 4.0,
-                body: `①KKWビル入口自動ドア：<span class="m-blue f-large f-bold">2485E</span>\n↑レンタカー区画、関西airport(株)出入口も\n\n②KKW <span class="m-blue f-bold">3628</span>\n\t↑ID使用可(ターミナル側ガラス扉)\n\n<span class="m-yellow f-bold">ーー Dispatch Briefing ーー</span>\n\n④北従業員 <span class="m-pink">検査場</span> 通路：<span class="m-pink f-large f-bold">7244</span>\n\t(17番横)　(~6/1 20:30頃)\n\n⑤ <span class="m-pink">G, PBB : 8471</span> (5/1~)\n\n2026/5/1　リバイス`
-            },
-            {
-                id: "cts",
-                name: "🇯🇵C3 KKW:BD◯◯(前月)",
-                // 新千歳空港 (半径5km)
-                lat: 42.775244, lng: 141.692291, radiusKm: 5.0,
-                body: `ID使えるらしい◆\n\nエレベータ、保安検査場：<span class="m-gray f-bold">3017#</span>\n2511、？\n\n<span class="m-pink">G : 2514</span> , <span class="m-pink">PBB: 2513</span>\n\n#14下クルーバス乗り場：<span class="m-gray f-bold">25(1)2</span>\nホテルバス @警察署先\n\n2026/5/1リバイス.`
-            },
-            {
-                id: "fuk",
-                name: "🇯🇵F2 ロビー→1250E 3階",
-                // 福岡空港 (半径4km)
-                lat: 33.585806, lng: 130.450654, radiusKm: 4.0,
-                body: `<span class="m-pink f-bold">G: 3042E</span> 左回転\n\n<span class="m-pink f-bold">PBB先端：5209E</span> 左回転\n\nOPEN/ ARR時：<span class="m-gray f-bold">3042 E→3042 E</span>\n福岡昭和タクシー：0120-408-860\nターミナル出て左に変わった\n\nロビーから：「バックヤード」<span class="m-gray f-bold">3994 E</span>\n\n2026/5/1リバイス`
-            },
-            {
-                id: "kix",
-                name: "🇯🇵B2 エア棟: 1125E 5階",
-                // 関西国際空港 (半径5km)
-                lat: 34.436521, lng: 135.244141, radiusKm: 5.0,
-                body: `エア棟<span class="m-yellow">5階</span>＝タ<span class="m-yellow">3階</span> <span class="m-yellow">4階</span>へ\nタ<span class="m-yellow">4階</span>→<span class="m-yellow">北側(遠い方)保安検査</span>→3階出国\n\n<span class="m-blue f-bold">INT</span> 検査後：<span class="m-blue f-bold">5031▽</span> (23-7時)\n\n<span class="m-blue f-bold">G : 07GG#</span> ,\n\nPBB：0933# 螺旋：0940\n\n<span class="m-pink f-bold">DOM</span> 2F検査後：<span class="m-pink f-bold">5071▽</span>\n\n<span class="m-pink f-bold">G : 09GGE</span> ,\n\nPBB：0933# 螺旋：0940\n\n2026/5/1　変更無し`
-            },
-            {
-                id: "hnd",
-                name: "🇯🇵G3 ビル: 44119# 3階",
-                // 羽田空港 第3ターミナル周辺 (半径5km)
-                lat: 35.549225, lng: 139.784432, radiusKm: 5.0,
-                body: `Dispatch後\n\t:ビル<span class="m-blue">4階</span> ＋ ターミナル<span class="m-blue">3階</span>\n\nDOM <span class="m-pink f-bold">G : 31383#</span> ,\n\nINT <span class="m-blue f-bold">G : 81611#</span> ,\n\tPBB : 35#9\n\n2026/5/1リバイス\n\n\n<img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="KIX-INT-MAP">`
-            },
-            {
-                id: "oka",
-                name: "🇯🇵縄3 ビル : *5071#",
-                // 那覇空港 (半径4km)
-                lat: 26.206411, lng: 127.646533, radiusKm: 4.0,
-                body: `<span class="m-blue f-bold">KKW 4階</span> <span class="m-blue f-bold">6717E</span>\n\n<span class="m-pink f-bold">G : *6374#</span> (-5/31)\n\n<span class="m-pink f-bold">PBB : ■2018▼</span>(-5/31)\n\n2026/5/1リバイス`
-            },
-            {
-                id: "tpe",
-                name: "✈️海外空港✈️",
-                // 台北 桃園国際空港周辺設定 (半径10km)
-                lat: 25.079706, lng: 121.234217, radiusKm: 10.0,
-                body: `🦷TPE3 1041E : <span class="m-blue f-bold">#D7</span> 下\n\nD1ゲート反対側 業務エレベーター <span class="m-pink f-bold">5576</span>\n\tPBB：整備士、KI、委託作業員に依頼\n\n🦷TSA3 KKW：#6,5番下\n\tPBB：3419#\n\n🦷PVG3\n\t外部点検：0583#\n\n🦷CAN3\n\tPBB：203510レ`
-            },
-            {
-                id: "ngo",
-                name: "☀️T3 F129 (-8/31)",
-                // 中部国際空港セントレア (半径4km)
-                lat: 34.858411, lng: 136.805391, radiusKm: 4.0,
-                body: `DOM <span class="m-pink f-bold">G : 7266</span>, (-10/31)\n\tPBB : <span class="m-pink">C0225</span> (~10/31)\n\nINT <span class="m-blue f-bold">G : 0397</span> \t(-8/1)\n\tPBB : <span class="m-blue">3804</span> (-4/30) ***\n\n出勤動線A：5480 (-11/1,2頃頃)\n\t保安検査追記：9909\n\n2026/5/1リバイス\n\n北側 F130`
-            },
-            {
-                id: "aoj",
-                name: "☀️A3",
-                // 青森空港 (半径3km)
-                lat: 40.734567, lng: 140.690856, radiusKm: 3.0,
-                body: `BAG : P29+M9カウンターに変更\n\n<span class="m-pink f-bold">G : 0874</span>, PBB:<span class="m-pink f-bold">0133</span>\n\n2026/08/20`
-            },
-            {
-                id: "can_memo",
-                name: "CAN",
-                // 広州白雲国際空港 (半径10km)
-                lat: 23.392436, lng: 113.298786, radiusKm: 10.0,
-                body: `到着：\n\n\n出発：\n@ホテル\nDispatch Brief：ホテル2階 (W213)\nPBBの暗証番号を聞く\n終了後ホテル1階ロビー → バスで空港3階 46ゲートから入れる\n\n@空港\n手荷物：Mカウンター\n手荷物検査：STAFF LANE →「乗務員搭乗LIST」、パスポート、ID\n税関：「税関申告書」を提出\n出国：CREW LANE ＋「乗務員搭乗LIST」,「GD」提出\n\n2025/03/19`
-            },
-            {
-                id: "zushi",
-                name: "🏠現地テスト用（逗子周辺）",
-                // 開発・テスト用の逗子ステーション
-                lat: 34.960631, lng: 139.578641, radiusKm: 3.0,
-                body: `【これは自宅・滞在先テスト用のダミータブです】\n\n伊丹空港と全く同じ連動テストがここで行えます。\n\n①KKWビル入口自動ドア：<span class="m-blue f-large f-bold">2485E</span>\n②北従業員 検査場 通路：<span class="m-pink f-large f-bold">7244</span>\n\n文字を自由に打ち換えてテストしてください。`
-            }
-        ];
+        const STATION_COORDINATES = {
+            itm:       { lat: 34.789539, lng: 135.438519, rad: 4.0, short: "🇯🇵O3" },
+            cts:       { lat: 42.775244, lng: 141.692291, rad: 5.0, short: "🇯🇵C3" },
+            fuk:       { lat: 33.585806, lng: 130.450654, rad: 4.0, short: "🇯🇵F2" },
+            kix:       { lat: 34.436521, lng: 135.244141, rad: 5.0, short: "🇯🇵B2" },
+            hnd:       { lat: 35.549225, lng: 139.784432, rad: 5.0, short: "🇯🇵G3" },
+            oka:       { lat: 26.206411, lng: 127.646533, rad: 4.0, short: "🇯🇵縄3" },
+            tpe:       { lat: 25.079706, lng: 121.234217, rad: 10.0, short: "✈️海外" },
+            ngo:       { lat: 34.858411, lng: 136.805391, rad: 4.0, short: "☀️T3" },
+            aoj:       { lat: 40.734567, lng: 140.690856, rad: 3.0, short: "☀️A3" },
+            can_memo:  { lat: 23.392436, lng: 113.298786, rad: 10.0, short: "CAN" },
+            zushi:     { lat: 34.960631, lng: 139.578641, rad: 3.0, short: "🏠現地" }
+        };
 
-        // iPadの内蔵ストレージからデータをロード（無ければ上記初期データ）
-        let AREAS = JSON.parse(localStorage.getItem('airport_pin_db')) || DEFAULT_AREAS;
-        let currentActiveId = AREAS[0].id;
+        // アプリ内で保持するデータ。ローカルストレージに無ければ末尾の初期データベースをロード
+        let CURRENT_DATABASE = JSON.parse(localStorage.getItem('airport_pin_db_v2')) || INITIAL_DATA;
+        let currentActiveId = CURRENT_DATABASE[0].id;
         let saveTimeout = null;
 
         // ==========================================================================
-        // 🔄 描画ファンクション
+        // 🔄 描画ロジック
         // ==========================================================================
         
-        // 左側のサイドバー(タブ一覧)を描画
         function renderSidebar(activeId) {
             const listEl = document.getElementById("tab-list");
             listEl.innerHTML = "";
             
-            AREAS.forEach(area => {
+            CURRENT_DATABASE.forEach(data => {
                 const item = document.createElement("div");
-                item.className = `tab-item ${area.id === activeId ? 'active' : ''}`;
-                item.onclick = () => selectTab(area.id);
+                item.className = `tab-item ${data.id === activeId ? 'active' : ''}`;
+                item.onclick = () => selectTab(data.id);
                 
-                // 表示用ネームを綺麗に成形
-                let displayName = area.name.replace("🇯🇵", "").replace("✈️", "").replace("☀️", "");
+                // 位置情報設定から略称(short)を取得、無ければ名前の先頭4文字を使用
+                const coord = STATION_COORDINATES[data.id];
+                const shortName = coord ? coord.short : data.name.substring(0, 4);
                 
                 item.innerHTML = `
-                    <div style="font-weight:600; display:flex; justify-content:space-between; align-items:center;">
-                        <span>${area.name}</span>
-                    </div>
-                    <div class="tab-meta">
-                        <span>半径 ${area.radiusKm}km 監視</span>
-                        <span>編集可</span>
-                    </div>
+                    <span class="tab-title-text" title="${data.name}">${data.name}</span>
+                    <span class="tab-meta">半径 ${coord ? coord.rad : 3}km</span>
                 `;
+                
+                // モバイル表示用に、ショートネーム属性を仕込む（CSSで切り替わる場合はそちら、今回はJSで文字を保護）
+                if (window.innerWidth <= 768) {
+                    item.querySelector('.tab-title-text').innerText = shortName;
+                }
+                
                 listEl.appendChild(item);
             });
         }
 
-        // 右側のエディタ(中身)を描画
-        function renderEditor(areaId) {
-            const areaData = AREAS.find(a => a.id === areaId);
-            if (!areaData) return;
+        function renderEditor(id) {
+            const record = CURRENT_DATABASE.find(r => r.id === id);
+            if (!record) return;
 
-            currentActiveId = areaId;
+            currentActiveId = id;
+            const editorEl = document.getElementById("editor-body");
             
-            // タイトルと本文を流し込む
-            document.getElementById("building-name").innerText = areaData.name;
-            document.getElementById("editor-body").innerHTML = areaData.body;
+            // 完全に1つのテキストストリームとして、1行目のタイトルごとエディタに展開
+            editorEl.innerHTML = record.content;
         }
 
-        // タブを手動で切り替えたとき
-        function selectTab(areaId) {
-            currentActiveId = areaId;
-            renderSidebar(areaId);
-            renderEditor(areaId);
+        function selectTab(id) {
+            currentActiveId = id;
+            renderSidebar(id);
+            renderEditor(id);
         }
 
         // ==========================================================================
-        // 💾 Bear風のリアルタイム自動保存システム
+        // 💾 リアルタイム自動保存 ＆ 同期コア
         // ==========================================================================
-        function saveTitleChange() {
-            const areaData = AREAS.find(a => a.id === currentActiveId);
-            if (areaData) {
-                areaData.name = document.getElementById("building-name").innerText;
-                renderSidebar(currentActiveId); // 左のタブ名もリアルタイム追従
-                triggerStorage();
-            }
-        }
+        function saveContentChange() {
+            const record = CURRENT_DATABASE.find(r => r.id === currentActiveId);
+            if (record) {
+                const fullHtml = document.getElementById("editor-body").innerHTML;
+                record.content = fullHtml;
+                
+                // 1行目のテキスト（プレーンテキスト）を抽出して、リアルタイムに左側のタブ名に反映
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = fullHtml;
+                const firstLine = tempDiv.innerText.split("\n")[0] || record.name;
+                record.name = firstLine;
 
-        function saveBodyChange() {
-            const areaData = AREAS.find(a => a.id === currentActiveId);
-            if (areaData) {
-                areaData.body = document.getElementById("editor-body").innerHTML;
-                triggerStorage();
+                renderSidebar(currentActiveId);
+                
+                // 遅延自動セーブ
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    localStorage.setItem('airport_pin_db_v2', JSON.stringify(CURRENT_DATABASE));
+                    showToast();
+                }, 1000);
             }
-        }
-
-        function triggerStorage() {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                localStorage.setItem('airport_pin_db', JSON.stringify(AREAS));
-                showToast();
-            }, 800); // タイピングが止まって800ms後にストレージへセーブ
         }
 
         function showToast() {
             const toast = document.getElementById("toast");
             toast.style.display = "block";
-            setTimeout(() => { toast.style.display = "none"; }, 1200);
+            setTimeout(() => { toast.style.display = "none"; }, 1000);
         }
 
         // ==========================================================================
-        // 🛰️ 複数空港対応・位置情報(GPS)自動ジャンプ判定
+        // ⚙️ Bear同期用 インポート/エクスポート
+        // ==========================================================================
+        function exportData() {
+            document.getElementById("sync-io").value = JSON.stringify(CURRENT_DATABASE, null, 2);
+        }
+
+        function importData() {
+            const rawJson = document.getElementById("sync-io").value;
+            if(!rawJson) return alert("データが空です");
+            try {
+                const parsed = JSON.parse(rawJson);
+                if(Array.isArray(parsed)) {
+                    CURRENT_DATABASE = parsed;
+                    localStorage.setItem('airport_pin_db_v2', JSON.stringify(CURRENT_DATABASE));
+                    selectTab(CURRENT_DATABASE[0].id);
+                    alert("同期・書き換えが成功しました！");
+                }
+            } catch(e) {
+                alert("JSONフォーマットが正しくありません。");
+            }
+        }
+
+        // ==========================================================================
+        // 🛰️ GPS自動トラッキング
         // ==========================================================================
         function getDistanceKm(lat1, lon1, lat2, lon2) {
             const R = 6371;
@@ -374,45 +367,107 @@
                 (position) => {
                     const uLat = position.coords.latitude;
                     const uLng = position.coords.longitude;
-                    let matchedArea = null;
+                    let matchedId = null;
 
-                    // 登録されている全空港の座標と現在地をループ比較
-                    for (const area of AREAS) {
-                        const dist = getDistanceKm(uLat, uLng, area.lat, area.lng);
-                        if (dist <= area.radiusKm) {
-                            matchedArea = area;
-                            break; // 最初に見つかったエリアにロック
+                    for (const [id, target] of Object.entries(STATION_COORDINATES)) {
+                        const dist = getDistanceKm(uLat, uLng, target.lat, target.lng);
+                        if (dist <= target.rad) {
+                            matchedId = id;
+                            break;
                         }
                     }
 
-                    if (matchedArea) {
-                        statusEl.innerText = `📍 到着自動連動: ${matchedArea.name.substring(0,10)}...`;
+                    if (matchedId) {
+                        const targetRecord = CURRENT_DATABASE.find(r => r.id === matchedId);
+                        statusEl.innerText = `📍 到着自動連動: ${targetRecord ? targetRecord.name.substring(0,8) : matchedId}`;
                         statusEl.className = "status-badge gps-active";
                         
-                        // マッチした空港のタブを自動で開く（ユーザーが手動選択している最中は邪魔しないようにIDが異なる時だけ）
-                        if (currentActiveId !== matchedArea.id) {
-                            selectTab(matchedArea.id);
+                        if (currentActiveId !== matchedId) {
+                            selectTab(matchedId);
                         }
                     } else {
-                        statusEl.innerText = "📡 飛行中 / エリア外（手動切替モード）";
+                        statusEl.innerText = "📡 エリア外（手動切替モード）";
                         statusEl.className = "status-badge";
                     }
                 },
                 (err) => {
-                    statusEl.innerText = "🔒 GPS信号オフ（手動選択のみ）";
+                    statusEl.innerText = "🔒 GPS信号オフ（手動選択）";
                     statusEl.className = "status-badge";
                 },
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
             );
         }
 
-        function manualRetry() {
-            startGpsTracking();
-        }
+        function manualRetry() { startGpsTracking(); }
+        window.addEventListener('resize', () => renderSidebar(currentActiveId));
 
-        // アプリ起動時の初期ロード
+        // 初期キック
         selectTab(currentActiveId);
         startGpsTracking();
+    </script>
+
+    <script>
+        var INITIAL_DATA = [
+            {
+                id: "itm",
+                name: "🇯🇵O3 KKW:2階",
+                content: `<b>🇯🇵O3 KKW:2階</b>\n\n①KKWビル入口自動ドア：<span class="m-blue f-large">2485E</span>\n↑レンタカー区画、関西airport(株)出入口も\n\n②KKW <span class="m-blue">3628</span>\n\t↑ID使用可(ターミナル側ガラス扉)\n\n<span class="m-yellow">ーー Dispatch Briefing ーー</span>\n\n④北従業員 <span class="m-pink">検査場</span> 通路：<span class="m-pink f-large">7244</span>\n\t(17番横)　(~6/1 20:30頃)\n\n⑤ <span class="m-pink">G, PBB : 8471</span> (5/1~)\n\n2026/5/1　リバイス`
+            },
+            {
+                id: "cts",
+                name: "🇯🇵C3 KKW:BD◯◯(前月)",
+                content: `<b>🇯🇵C3 KKW:BD◯◯(前月)</b>\n\nID使えるらしい◆\n\nエレベータ、保安検査場：<span class="m-gray f-bold">3017#</span>\n2511、？\n\n<span class="m-pink">G : 2514</span> , <span class="m-pink">PBB: 2513</span>\n\n#14下クルーバス乗り場：<span class="m-gray f-bold">25(1)2</span>\nホテルバス @警察署先\n\n2026/5/1リバイス.`
+            },
+            {
+                id: "fuk",
+                name: "🇯🇵F2 ロビー→1250E 3階",
+                content: `<b>🇯🇵F2 ロビー→1250E 3階</b>\n\n<span class="m-pink">G: 3042E</span> 左回転\n\n<span class="m-pink">PBB先端：5209E</span> 左回転\n\nOPEN/ ARR時：<span class="m-gray f-bold">3042 E→3042 E</span>\n福岡昭和タクシー：0120-408-860\nターミナル出て左に変わった\n\nロビーから：「バックヤード」<span class="m-gray f-bold">3994 E</span>\n\n2026/5/1リバイス`
+            },
+            {
+                id: "kix",
+                name: "🇯🇵B2 エア棟: 1125E 5階",
+                content: `<b>🇯🇵B2 エア棟: 1125E 5階</b>\n\nエア棟<span class="m-yellow">5階</span>＝タ<span class="m-yellow">3階</span> <span class="m-yellow">4階</span>へ\nタ<span class="m-yellow">4階</span>→<span class="m-yellow">北側(遠い方)保安検査</span>→3階出国\n\n<span class="m-blue">INT</span> 検査後：<span class="m-blue">5031▽</span> (23-7時)\n\n<span class="m-blue">G : 07GG#</span> ,\n\nPBB：0933# 螺旋：0940\n\n<span class="m-pink">DOM</span> 2F検査後：<span class="m-pink">5071▽</span>\n\n<span class="m-pink">G : 09GGE</span> ,\n\nPBB：0933# 螺旋：0940\n\n2026/5/1　変更無し`
+            },
+            {
+                id: "hnd",
+                name: "🇯🇵G3 ビル: 44119# 3階",
+                content: `<b>🇯🇵G3 ビル: 44119# 3階</b>\n\nDispatch後\n\t:ビル<span class="m-blue">4階</span> ＋ ターミナル<span class="m-blue">3階</span>\n\nDOM <span class="m-pink">G : 31383#</span> ,\n\nINT <span class="m-blue">G : 81611#</span> ,\n\tPBB : 35#9\n\n2026/5/1リバイス\n\n<img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="HND-INT-MAP">`
+            },
+            {
+                id: "oka",
+                name: "🇯🇵縄3 ビル : *5071#",
+                content: `<b>🇯🇵縄3 ビル : *5071#</b>\n\n<span class="m-blue">KKW 4階</span> <span class="m-blue">6717E</span>\n\n<span class="m-pink">G : *6374#</span> (-5/31)\n\n<span class="m-pink">PBB : ■2018▼</span>(-5/31)\n\n2026/5/1リバイス`
+            },
+            {
+                id: "tpe",
+                name: "✈️海外空港✈️",
+                content: `<b>✈️海外空港✈️</b>\n\n🦷TPE3 1041E : <span class="m-blue">#D7</span> 下\n\nD1ゲート反対側 業務エレベーター <span class="m-pink">5576</span>\n\tPBB：整備士、KI、委託作業員に依頼\n\n🦷TSA3 KKW：#6,5番下\n\tPBB：3419#\n\n🦷PVG3\n\t外部点検：0583#\n\n🦷CAN3\n\tPBB：203510レ`
+            },
+            {
+                id: "ngo",
+                name: "☀️T3 F129 (-8/31)",
+                content: `<b>☀️T3 F129 (-8/31)</b>\n\nDOM <span class="m-pink">G : 7266</span>, (-10/31)\n\tPBB : <span class="m-pink">C0225</span> (~10/31)\n\nINT <span class="m-blue">G : 0397</span> \t(-8/1)\n\tPBB : <span class="m-blue">3804</span> (-4/30) ***\n\n出勤動線A：5480 (-11/1,2頃頃)\n\t保安検査追記：9909\n\n2026/5/1リバイス\n\n北側 F130`
+            },
+            {
+                id: "aoj",
+                name: "☀️A3",
+                content: `<b>☀️A3</b>\n\nBAG : P29+M9カウンターに変更\n\n<span class="m-pink">G : 0874</span>, PBB:<span class="m-pink">0133</span>\n\n2026/08/20`
+            },
+            {
+                id: "can_memo",
+                name: "CAN",
+                content: `<b>CAN</b>\n\n到着：\n\n出発：\n@ホテル\nDispatch Brief：ホテル2階 (W213)\nPBBの暗証番号を聞く\n終了後ホテル1階ロビー → バスで空港3階 46ゲートから入れる\n\n@空港\n手荷物：Mカウンター\n手荷物検査：STAFF LANE →「乗務員搭乗LIST」、パスポート、ID\n税関：「税関申告書」を提出\n出国：CREW LANE ＋「乗務員搭乗LIST」,「GD」提出\n\n2025/03/19`
+            },
+            {
+                id: "zushi",
+                name: "🏠現地テスト用（逗子周辺）",
+                content: `<b>🏠現地テスト用（逗子周辺）</b>\n\n【これは自宅・滞在先テスト用のダミータブです】\n\n伊丹空港と全く同じ連動テストがここで行えます。\n\n①KKWビル入口自動ドア：<span class="m-blue f-large">2485E</span>\n②北従業員 検査場 通路：<span class="m-pink f-large">7244</span>\n\n文字を自由に打ち換えてテストしてください。`
+            }
+        ];
+        // 既存の古いDBがある場合はマージするためのフォールバック
+        if(!localStorage.getItem('airport_pin_db_v2') && localStorage.getItem('airport_pin_db')){
+            localStorage.setItem('airport_pin_db_v2', JSON.stringify(INITIAL_DATA));
+        }
     </script>
 </body>
 </html>
