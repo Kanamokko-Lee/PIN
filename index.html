@@ -43,7 +43,7 @@
             flex: 1;
         }
         
-        /* 並び替え(ドラッグ＆ドロップ)用のスタイル */
+        /* タブアイテム */
         .tab-item {
             padding: 14px 18px;
             cursor: grab;
@@ -70,9 +70,21 @@
             color: #8e8e93;
             display: flex;
             justify-content: space-between;
-            pointer-events: none; /* 子要素の干渉を防ぐ */
+            pointer-events: none;
         }
-        .tab-title-text { pointer-events: none; }
+        
+        /* 🏷️ タブ名入力欄のスタイル */
+        .tab-title-input {
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 1px dashed #0071e3;
+            background: #fff;
+            color: #1d1d1f;
+            outline: none;
+            width: 90%;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
 
         /* ② 右側：本文エリア */
         .main-content {
@@ -94,7 +106,7 @@
             gap: 10px;
         }
         
-        /* 編集ツールバーのスタイル */
+        /* ツールバー */
         .toolbar {
             display: flex;
             gap: 4px;
@@ -154,7 +166,6 @@
             font-size: 1.05rem;
         }
         
-        /* Bear風マーカー（クラス指定ではなくインラインでも動くよう装飾） */
         .map-img {
             max-width: 100%;
             height: auto;
@@ -183,9 +194,9 @@
             .sidebar-header { padding: 10px 5px; justify-content: center; }
             .sidebar-header button { font-size: 0.65rem; padding: 2px 4px; }
             .tab-item { padding: 15px 5px; align-items: center; text-align: center; }
-            .tab-title-text { font-size: 0.9rem; display: block; width: 100%; overflow: hidden; white-space: nowrap; }
             .editor-container { padding: 20px 15px; }
             .toolbar { display: flex; flex-wrap: wrap; }
+            .tab-title-input { font-size: 0.75rem; width: 95%; }
         }
     </style>
 </head>
@@ -229,7 +240,7 @@
                 </select>
             </div>
             
-            <span style="font-size:0.75rem; color:#8e8e93;">自動保存</span>
+            <button onclick="exportAllData()" style="font-size:0.75rem; cursor:pointer; padding:4px 8px; background:#0071e3; color:white; border:none; border-radius:4px;">バックアップ出力</button>
         </div>
         
         <div class="editor-container">
@@ -241,7 +252,7 @@
     <div id="toast" class="toast">変更を自動保存しました</div>
 
     <script>
-        // 初期データ（LocalStorageが空の時のみ使用）
+        // 初期データ
         const DEFAULT_AREAS = [
             { id: "itm", name: "🇯🇵O3 KKW:2階", short: "ITM", lat: 34.789539, lng: 135.438519, radiusKm: 4.0, body: `①KKWビル入口自動ドア：<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold; font-size: large;">2485E</span><br>↑レンタカー区画、関西airport(株)出入口も<br><br>②KKW <span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3628</span><br> 	↑ID使用可(ターミナル側ガラス扉)<br><br><span style="background-color: rgb(255, 243, 205); color: rgb(102, 77, 3); font-weight: bold;">ーー Dispatch Briefing ーー</span><br><br>④北従業員 <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">検査場</span> 通路：<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold; font-size: large;">7244</span><br> 	(17番横)　(~6/1 20:30頃)<br><br>⑤ <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G, PBB : 8471</span> (5/1~)<br><br>2026/5/1　リバイス` },
             { id: "cts", name: "🇯🇵C3 KKW:BD◯◯(前月)", short: "CTS", lat: 42.775244, lng: 141.692291, radiusKm: 5.0, body: `ID使えるらしい◆<br><br>エレベータ、保安検査場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3017#</span><br>2511、？<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G : 2514</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">PBB: 2513</span><br><br>#14下クルーバス乗り場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">25(1)2</span><br>ホテルバス @警察署先<br><br>2026/5/1リバイス.` },
@@ -249,17 +260,54 @@
             { id: "hnd", name: "🇯🇵G3 ビル: 44119# 3階", short: "HND", lat: 35.549225, lng: 139.784432, radiusKm: 5.0, body: `Dispatch後<br> 	:ビル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50);">4階</span> ＋ ターミナル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50);">3階</span><br><br>DOM <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 31383#</span> ,<br><br>INT <span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">G : 81611#</span> ,<br> 	PBB : 35#9<br><br>2026/5/1リバイス<br><br><br><img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="HND-MAP">` }
         ];
 
-        let AREAS = JSON.parse(localStorage.getItem('airport_pin_db')) || DEFAULT_AREAS;
-        let currentActiveId = AREAS[0].id;
+        let AREAS = [];
+        let currentActiveId = "";
         let saveTimeout = null;
 
-        // 🛠️ 文字装飾コマンド実行
+        // ==========================================================================
+        // 📥 【重要】一発同期用URLインポート処理システム
+        // ==========================================================================
+        function checkUrlImport() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const importDataStr = urlParams.get('importData');
+            
+            if (importDataStr) {
+                try {
+                    // URLからシリアライズされたテキストデータをデコードしてパース
+                    const decodedData = JSON.parse(decodeURIComponent(importDataStr));
+                    if (Array.isArray(decodedData) && decodedData.length > 0) {
+                        AREAS = decodedData;
+                        localStorage.setItem('airport_pin_db', JSON.stringify(AREAS));
+                        alert("🛰️ iCloud経由のデータを正常にインポートしました！");
+                        // URLパラメータをクリアしてリフレッシュ
+                        window.location.href = window.location.origin + window.location.pathname;
+                        return true;
+                    }
+                } catch (e) {
+                    alert("データインポートに失敗しました。データ形式が正しくありません。");
+                }
+            }
+            return false;
+        }
+
+        // バックアップ用に出力する機能
+        function exportAllData() {
+            const dataStr = encodeURIComponent(JSON.stringify(AREAS));
+            const shareUrl = window.location.origin + window.location.pathname + "?importData=" + dataStr;
+            
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("クリップボードに同期用URLをコピーしました！これをBear等に貼り付けてバックアップ・同期用としてお使いください。");
+            }).catch(() => {
+                alert("URLのコピーに失敗しました。以下をご使用ください:\n" + shareUrl);
+            });
+        }
+
         function execCmd(command, value = null) {
             document.execCommand(command, false, value);
             saveBodyChange();
         }
 
-        // 🔄 タブの描画 ＆ ドラッグ＆ドロップイベント付与
+        // 🔄 タブの描画（ダブルタップ・クリックで編集可能）
         function renderSidebar(activeId) {
             const listEl = document.getElementById("tab-list");
             listEl.innerHTML = "";
@@ -269,63 +317,116 @@
                 item.className = `tab-item ${area.id === activeId ? 'active' : ''}`;
                 item.setAttribute("draggable", "true");
                 item.setAttribute("data-index", index);
+                
+                // 通常の選択クリック
                 item.onclick = (e) => {
-                    if (item.classList.contains('dragging')) return;
+                    if (e.target.tagName === 'INPUT' || item.classList.contains('dragging')) return;
                     selectTab(area.id);
                 };
                 
-                // ドラッグイベントの登録
+                // 🏷️ ダブルクリック（または長押し）で文字編集モードにする
+                item.ondblclick = (e) => {
+                    enableTabRename(area.id, item);
+                };
+
+                // ドラッグイベント
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragover', handleDragOver);
                 item.addEventListener('drop', handleDrop);
                 item.addEventListener('dragend', handleDragEnd);
                 
-                // タッチデバイス（iPad/iPhone）用の簡易並び替えサポート
+                // タッチ対応（iPad/iPhone）
                 item.addEventListener('touchstart', handleTouchStart, {passive: true});
                 item.addEventListener('touchmove', handleTouchMove, {passive: false});
                 item.addEventListener('touchend', handleTouchEnd);
 
                 const isMobile = window.innerWidth <= 768;
+                // スマホ表示のときはshort(3文字)、iPadなら通常名
                 const titleText = isMobile ? (area.short || area.name.substring(0, 3)) : area.name;
                 
                 item.innerHTML = `
-                    <div style="font-weight:600;"><span class="tab-title-text">${titleText}</span></div>
-                    <div class="tab-meta"><span>${area.radiusKm}km 監視</span></div>
+                    <div style="font-weight:600;" id="title-container-${area.id}">
+                        <span class="tab-title-text">${titleText}</span>
+                    </div>
+                    <div class="tab-meta"><span>${area.radiusKm}km</span></div>
                 `;
                 listEl.appendChild(item);
             });
         }
 
-        // 【ドラッグ＆ドロップ制御ロジック】
-        let dragStartIndex = null;
+        // 🏷️ タブの名前インライン編集切り替え
+        function enableTabRename(areaId, itemEl) {
+            const areaData = AREAS.find(a => a.id === areaId);
+            const container = document.getElementById(`title-container-${areaId}`);
+            if (!areaData || !container) return;
 
+            const isMobile = window.innerWidth <= 768;
+            // スマホならshortプロパティを、iPadならnameプロパティを編集対象にする
+            const currentVal = isMobile ? (areaData.short || areaData.name.substring(0,3)) : areaData.name;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'tab-title-input';
+            input.value = currentVal;
+            
+            // 入力終了処理
+            const finishRename = () => {
+                if (input.value.trim() !== "") {
+                    if (isMobile) {
+                        areaData.short = input.value.trim();
+                    } else {
+                        areaData.name = input.value.trim();
+                        // メイン画面のタイトルも連動
+                        if (currentActiveId === areaId) {
+                            document.getElementById("building-name").innerText = areaData.name;
+                        }
+                    }
+                    triggerStorage();
+                }
+                renderSidebar(currentActiveId);
+            };
+
+            input.onblur = finishRename;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') { input.blur(); }
+            };
+
+            container.innerHTML = '';
+            container.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        // 【ドラッグ＆ドロップ制御】
+        let dragStartIndex = null;
         function handleDragStart(e) {
             dragStartIndex = parseInt(this.getAttribute('data-index'));
             this.classList.add('dragging');
         }
-        function handleDragOver(e) {
-            if (e.preventDefault) e.preventDefault();
-            return false;
-        }
+        function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); return false; }
         function handleDrop(e) {
             e.stopPropagation();
             const dragEndIndex = parseInt(this.getAttribute('data-index'));
-            if (dragStartIndex !== dragEndIndex) {
-                moveAreaItem(dragStartIndex, dragEndIndex);
-            }
+            if (dragStartIndex !== dragEndIndex) moveAreaItem(dragStartIndex, dragEndIndex);
         }
-        function handleDragEnd() {
-            this.classList.remove('dragging');
-        }
+        function handleDragEnd() { this.classList.remove('dragging'); }
 
-        // タッチ操作（iPad等）での並び替え簡易実装
+        // タッチ操作並び替え
         let touchStartEl = null;
+        let touchTimer = null;
         function handleTouchStart(e) {
             touchStartEl = e.currentTarget;
             dragStartIndex = parseInt(touchStartEl.getAttribute('data-index'));
+            
+            // 📱 スマホ・iPad用に「1秒間長押し」で名前編集モードに入るようにサポート
+            clearTimeout(touchTimer);
+            const areaId = AREAS[dragStartIndex].id;
+            touchTimer = setTimeout(() => {
+                if (touchStartEl) enableTabRename(areaId, touchStartEl);
+            }, 1000);
         }
         function handleTouchMove(e) {
-            // タッチ位置にある要素を取得して、視覚的に入れ替える簡易シミュレート
+            clearTimeout(touchTimer); // 動いたら長押し解除
             const touch = e.touches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
             const item = target ? target.closest('.tab-item') : null;
@@ -336,7 +437,7 @@
                 touchStartEl = item;
             }
         }
-        function handleTouchEnd() { touchStartEl = null; }
+        function handleTouchEnd() { clearTimeout(touchTimer); touchStartEl = null; }
 
         function moveAreaItem(from, to) {
             const targetItem = AREAS.splice(from, 1)[0];
@@ -421,8 +522,20 @@
         }
         function manualRetry() { startGpsTracking(); }
         window.addEventListener('resize', () => renderSidebar(currentActiveId));
-        selectTab(currentActiveId);
-        startGpsTracking();
+
+        // 🚀 初期起動時のロード分岐
+        async function init() {
+            // URL経由のインポートがあればそれを最優先
+            const imported = checkUrlImport();
+            if (!imported) {
+                AREAS = JSON.parse(localStorage.getItem('airport_pin_db')) || DEFAULT_AREAS;
+                currentActiveId = AREAS[0].id;
+                selectTab(currentActiveId);
+                startGpsTracking();
+            }
+        }
+        
+        init();
     </script>
 </body>
 </html>
