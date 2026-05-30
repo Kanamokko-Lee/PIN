@@ -36,7 +36,8 @@
             border-right: none;
         }
         .sidebar-header {
-            padding: 12px 15px;
+            /* 上部のノッチ・ステータスバーの余白をサイドバーヘッダーにも確保 */
+            padding: calc(12px + env(safe-area-inset-top)) 15px 12px 15px;
             font-size: 0.85rem;
             font-weight: bold;
             color: #8e8e93;
@@ -132,9 +133,9 @@
             position: relative;
         }
         
-        /* 最上部バー（GPSとデータ管理のみ） */
+        /* 📱 最上部バー（ノッチ・ステータスバー回避対策） */
         .top-bar {
-            padding: 10px 20px;
+            padding: calc(10px + env(safe-area-inset-top)) 20px 10px 20px;
             border-bottom: 1px solid #e5e5ea;
             background: #fff;
             display: flex;
@@ -198,7 +199,7 @@
             min-height: 350px;
             line-height: 1.6;
             font-size: 1.05rem;
-            padding-bottom: 140px; /* 下部バーとの干渉防止に少し広げました */
+            padding-bottom: 140px;
         }
         .map-img {
             max-width: 100%;
@@ -247,7 +248,7 @@
             background: #fff;
             border: 1px solid #d1d1d6;
             padding: 5px 6px;
-            -webkit-appearance: none; /* iOS標準デザインのバグ回避 */
+            -webkit-appearance: none;
             appearance: none;
         }
 
@@ -287,17 +288,21 @@
 
         /* 📱 スマートフォン（iPhone）最適化表示 */
         @media screen and (max-width: 768px) {
-            .sidebar { width: 60px; } /* 最初の3文字が綺麗に収まるよう少し幅を最適化(52px→60px) */
-            .sidebar-header { padding: 8px 2px; flex-direction: column; gap: 4px; }
+            .sidebar { width: 60px; }
+            .sidebar-header { 
+                /* iPhoneスクショのように上部を下げて被りを防ぐ */
+                padding: calc(8px + env(safe-area-inset-top)) 2px 8px 2px; 
+                flex-direction: column; 
+                gap: 4px; 
+            }
             .sidebar-header span, .tab-meta, .rename-btn { display: none !important; }
             .sidebar-header button { font-size: 0.65rem; padding: 2px 0; width: 90%; text-align: center; }
             .tab-item { padding: 14px 2px; justify-content: center; text-align: center; font-size: 0.85rem; position: relative; }
             .tab-title-text { font-size: 0.85rem; text-align: center; width: 100%; display: block; }
             
             .editor-container { padding: 15px 12px; }
-            .top-bar { padding: 8px 10px; }
+            .top-bar { padding: calc(8px + env(safe-area-inset-top)) 10px 8px 10px; }
             
-            /* Safariのツールバーに追従させるためbottom指定を0にし、safe-areaに丸投げします */
             .bottom-toolbar { 
                 bottom: 0; 
                 height: calc(54px + env(safe-area-inset-bottom)); 
@@ -369,20 +374,24 @@
     <div id="toast" class="toast">保存されました</div>
 
     <script>
+        // 空港一文字コードをルールに基づいて完全修正しました
         const DEFAULT_AREAS = [
-            { id: "hnd", name: "🇯🇵G3 ビル: 44119# 3階", short: "HND", lat: 35.549225, lng: 139.784432, radiusKm: 5.0, body: `Dispatch後<br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">4階</span> ＋ ターミナル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3階</span><br><br>DOM <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 31383#</span> ,<br><br>INT <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 81611#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35#9<br><br>2026/5/1リバイス<br><br><br><img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="HND-MAP">` },
-            { id: "itm", name: "🇯🇵O3 KKW:2階", short: "ITM", lat: 34.789539, lng: 135.438519, radiusKm: 4.0, body: `①KKWビル入口自動ドア：<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold; font-size: large;">2485E</span><br>↑レンタカー区画、関西airport(株)出入口も<br><br>②KKW <span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3628</span><br>&nbsp;&nbsp;&nbsp;&nbsp;↑ID使用可(ターミナル側ガラス扉)<br><br><span style="background-color: rgb(255, 243, 205); color: rgb(102, 77, 3); font-weight: bold;">ーー Dispatch Briefing ーー</span><br><br>④北従業員 <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">検査場</span> 通路：<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold; font-size: large;">7244</span><br>&nbsp;&nbsp;&nbsp;&nbsp;(17番横)　(~6/1 20:30頃)<br><br>⑤ <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G, PBB : 8471</span> (5/1~)<br><br>2026/5/1　リバイス` },
-            { id: "cts", name: "🇯🇵C3 KKW:BD◯◯(前月)", short: "CTS", lat: 42.775244, lng: 141.692291, radiusKm: 5.0, body: `ID使えるらしい◆<br><br>エレベータ、保安検査場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3017#</span><br>2511、？<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G : 2514</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">PBB: 2513</span><br><br>#14下クルーバス乗り場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">25(1)2</span><br>ホテルバス @警察署先<br><br>2026/5/1リバイス.` },
-            { id: "fuk", name: "🇯🇵F2 ロビー→1250E 3階", short: "FUK", lat: 33.585806, lng: 130.450654, radiusKm: 4.0, body: `<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G: 3042E</span> 左回転<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB先端：5209E</span> 左回転<br><br>OPEN/ ARR時：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3042 E→3042 E</span><br>福岡昭和タクシー：0120-408-860<br>ターミナル出て左に変わった<br><br>ロビーから：「バックヤード」<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3994 E</span><br><br>2026/5/1リバイス` },
-            { id: "oka", name: "🇯🇵O3 1F: 7575# 中2", short: "OKA", lat: 26.206453, lng: 127.646511, radiusKm: 4.0, body: `1F：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">7575#</span><br>中2階（JTA側・気象）：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">4123#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 3151#</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 1515#</span><br><br>2026/5/1リバイス` }
+            { id: "hnd", name: "🇯🇵HND ビル: 44119# 3階", short: "HND", lat: 35.549225, lng: 139.784432, radiusKm: 5.0, body: `Dispatch後<br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">4階</span> ＋ ターミナル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3階</span><br><br>DOM <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 31383#</span> ,<br><br>INT <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 81611#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35#9<br><br>2026/5/1リバイス<br><br><br><img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="HND-MAP">` },
+            { id: "itm", name: "🇯🇵ITM KKW:2階", short: "ITM", lat: 34.789539, lng: 135.438519, radiusKm: 4.0, body: `①KKWビル入口自動ドア：<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold; font-size: large;">2485E</span><br>↑レンタカー区画、関西airport(株)出入口も<br><br>②KKW <span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3628</span><br>&nbsp;&nbsp;&nbsp;&nbsp;↑ID使用可(ターミナル側ガラス扉)<br><br><span style="background-color: rgb(255, 243, 205); color: rgb(102, 77, 3); font-weight: bold;">ーー Dispatch Briefing ーー</span><br><br>④北従業員 <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">検査場</span> 通路：<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold; font-size: large;">7244</span><br>&nbsp;&nbsp;&nbsp;&nbsp;(17番横)　(~6/1 20:30頃)<br><br>⑤ <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G, PBB : 8471</span> (5/1~)<br><br>2026/5/1　リバイス` },
+            { id: "cts", name: "🇯🇵CTS KKW:BD◯◯(前月)", short: "CTS", lat: 42.775244, lng: 141.692291, radiusKm: 5.0, body: `ID使えるらしい◆<br><br>エレベータ、保安検査場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3017#</span><br>2511、？<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G : 2514</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">PBB: 2513</span><br><br>#14下クルーバス乗り場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">25(1)2</span><br>ホテルバス @警察署先<br><br>2026/5/1リバイス.` },
+            { id: "fuk", name: "🇯🇵FUK ロビー→1250E 3階", short: "FUK", lat: 33.585806, lng: 130.450654, radiusKm: 4.0, body: `<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G: 3042E</span> 左回転<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB先端：5209E</span> 左回転<br><br>OPEN/ ARR時：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3042 E→3042 E</span><br>福岡昭和タクシー：0120-408-860<br>ターミナル出て左に変わった<br><br>ロビーから：「バックヤード」<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3994 E</span><br><br>2026/5/1リバイス` },
+            { id: "oka", name: "🇯🇵OKA 1F: 7575# 中2", short: "OKA", lat: 26.206453, lng: 127.646511, radiusKm: 4.0, body: `1F：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">7575#</span><br>中2階（JTA側・気象）：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">4123#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 3151#</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 1515#</span><br><br>2026/5/1リバイス` },
+            { id: "kmq", name: "🇯🇵KMQ 1F: 3121# G3511", short: "KMQ", lat: 36.393755, lng: 136.407519, radiusKm: 3.0, body: `1F：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3121#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 3511</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 3511</span><br><br>2026/5/1リバイス` },
+            { id: "koj", name: "🇯🇵KOJ オペ室: 1234#", short: "KOJ", lat: 31.803450, lng: 130.719330, radiusKm: 3.0, body: `オペ室：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">1234#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 5678</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 5678</span><br><br>2026/5/1リバイス` },
+            { id: "kmj", name: "🇯🇵KMJ 2F: 5885#", short: "KMJ", lat: 32.837135, lng: 130.854930, radiusKm: 3.0, body: `2F オペ室前廊下扉：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">5885#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 2468</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 2468</span><br><br>2026/5/1リバイス` }
         ];
 
         let AREAS = [];
         let currentActiveId = "";
         let saveTimeout = null;
-        let isTabRenaming = false; // インライン編集中の誤動作ガード
+        let isTabRenaming = false;
 
-        // 🔄 並び替えロジック（不具合修正版）
+        // 🔄 並び替えロジック
         let dragStartIndex = null;
         function handleDragStart(e) { 
             if(isTabRenaming) { e.preventDefault(); return; }
@@ -402,7 +411,6 @@
         }
         function handleDragEnd() { this.classList.remove('dragging'); dragStartIndex = null; }
 
-        // 📱 タッチ並び替えのチャタリング・過剰移動バグ修正
         let touchStartEl = null;
         let lastSwappedIndex = null;
 
@@ -419,12 +427,11 @@
             const item = target ? target.closest('.tab-item') : null;
             if (item && item !== touchStartEl) {
                 const overIndex = parseInt(item.getAttribute('data-index'));
-                // 連続発生を防ぐガード条件
                 if (overIndex !== lastSwappedIndex && !isNaN(overIndex)) {
                     const rotatedItem = AREAS.splice(lastSwappedIndex, 1)[0];
                     AREAS.splice(overIndex, 0, rotatedItem);
                     lastSwappedIndex = overIndex;
-                    touchStartEl = item; // 基準点を更新
+                    touchStartEl = item;
                     renderSidebar(currentActiveId); 
                     triggerStorage();
                 }
@@ -432,7 +439,7 @@
         }
         function handleTouchEnd() { dragStartIndex = null; touchStartEl = null; lastSwappedIndex = null; }
 
-        // 📱 左右スワイプによるタブ開閉
+        // 📱 スワイプ開閉
         let touchStartX = 0; let touchStartY = 0;
         function initSwipeDetection() {
             const zone = document.getElementById('swipe-zone');
@@ -440,7 +447,7 @@
             zone.addEventListener('touchend', (e) => {
                 const diffX = e.changedTouches[0].clientX - touchStartX;
                 const diffY = e.changedTouches[0].clientY - touchStartY;
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) { // 感度を少し調整
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
                     const sidebar = document.getElementById('sidebar');
                     if (diffX > 0 && sidebar.classList.contains('hidden')) sidebar.classList.remove('hidden');
                     else if (diffX < 0 && !sidebar.classList.contains('hidden')) sidebar.classList.add('hidden');
@@ -449,14 +456,14 @@
         }
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
 
-        // 💾 ファイル共有入出力
+        // 💾 iCloud入出力
         function exportToICloudFile() {
             const dataStr = JSON.stringify(AREAS, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const file = new File([blob], "station_pin_db.json", { type: "application/json" });
             if (navigator.share) {
                 navigator.share({ files: [file], title: "Station PIN Backup" })
-                .then(() => showToast("保存用メニューを起動しました")).catch((e) => console.log(e));
+                .then(() => showToast("保存メニューを起動しました")).catch((e) => console.log(e));
             } else {
                 const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "station_pin_db.json"; a.click();
             }
@@ -472,15 +479,15 @@
                         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
                             AREAS = parsed; localStorage.setItem('airport_pin_db_v3', JSON.stringify(AREAS));
                             alert("🛰️ データを同期・復元しました！"); selectTab(AREAS[0].id);
-                        } else { alert("有効なデータ形式ではありません。"); }
-                    } catch (err) { alert("インポートに失敗しました。"); }
+                        } else { alert("形式が正しくありません。"); }
+                    } catch (err) { alert("読込に失敗しました。"); }
                 };
                 reader.readAsText(file);
             };
             input.click();
         }
 
-        // ✍️ エディタ・タブ描画
+        // ✍️ エディタコマンド
         function execCmd(command, value = null) { document.execCommand(command, false, value); saveBodyChange(); }
         
         function renderSidebar(activeId) {
@@ -521,7 +528,7 @@
             });
         }
 
-        // 📱 インライン名称変更（タッチ移動イベント干渉防止修正）
+        // 📱 インライン名称変更
         function enableTabRename(areaId, event) {
             if(event) { event.stopPropagation(); event.preventDefault(); }
             if(isTabRenaming) return;
@@ -539,7 +546,6 @@
             input.className = 'tab-title-input';
             input.value = currentVal;
             
-            // 入力フィールド上でのタッチイベントが親（tab-item）に伝播するのを100%遮断
             input.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: true});
             input.addEventListener('touchmove', (e) => e.stopPropagation(), {passive: true});
 
@@ -620,13 +626,11 @@
         function manualRetry() { startGpsTracking(); }
         window.addEventListener('resize', () => renderSidebar(currentActiveId));
 
-        // 💾 初期化ロジックの安全性強化
         function init() {
             const localData = localStorage.getItem('airport_pin_db_v3');
             if (localData) {
                 try {
                     const parsed = JSON.parse(localData);
-                    // 壊れた配列データでなければ、件数に関わらずユーザーデータを最優先する
                     if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
                         AREAS = parsed;
                     } else {
