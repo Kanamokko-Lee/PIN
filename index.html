@@ -22,7 +22,9 @@
 
         /* ── サイドバー ── */
         .sidebar {
-            width: 140px;
+            width: fit-content;
+            min-width: 80px;
+            max-width: 200px;
             background: #f9f9fb;
             border-right: 1px solid #e5e5ea;
             display: flex; flex-direction: column;
@@ -609,18 +611,21 @@ function updateFontSizeSelect() {
 }
 
 // ============================================================
-// short 自動生成: name（タイトル）の先頭英字3〜4文字
-// 例: "☀️HND3 F129 (~8/31)" → "HND"
-//     "🇯🇵NGO 3 ビル..." → "NGO"
+// short 自動生成: nameの先頭が絵文字なら除去して最初の3文字
+// 例: "☀️HND3 F129..." → "HND"
+//     "🇯🇵NGO 3..."   → "NGO"
+//     "CTS 3 KKW..."  → "CTS"
 // ============================================================
 function deriveShort(name) {
     const tmp = document.createElement("div");
     tmp.innerHTML = name;
-    const text = (tmp.innerText || "").trim();
-    // 絵文字・記号を除いて最初の英字ブロック3〜4文字を取得
-    const m = text.match(/[A-Za-z]{3,4}/);
-    if (m) return m[0].toUpperCase().substring(0, 4);
-    // 英字がなければ先頭の日本語3文字
+    let text = (tmp.innerText || "").trim();
+    // 先頭の絵文字・空白を除去（絵文字はUnicode範囲で除去）
+    text = text.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}\u{1F1E0}-\u{1F1FF}\s]+/u, "").trim();
+    // 先頭から英数字3文字を取得
+    const m = text.match(/^[A-Za-z0-9]{1,4}/);
+    if (m) return m[0].toUpperCase().substring(0, 3);
+    // 英数字がなければ日本語3文字
     const plain = text.replace(/[^\u3040-\u30FF\u4E00-\u9FFF]/g, "").trim();
     return plain.substring(0, 3) || "---";
 }
@@ -853,11 +858,41 @@ function addNewAirport() {
     }, 100);
 }
 
+// 電話番号をtel:リンクに変換（テキストノードのみ処理）
+function linkifyPhoneNumbers(el) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+        // 日本の電話番号パターン: 0x0-xxxx-xxxx, 0xx-xxx-xxxx, 0120-xxx-xxx など
+        const pattern = /(0\d{1,4}[-\s]?\d{2,4}[-\s]?\d{3,4})/g;
+        const text = node.nodeValue;
+        if (!pattern.test(text)) return;
+        pattern.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let last = 0, m;
+        while ((m = pattern.exec(text)) !== null) {
+            if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+            const a = document.createElement('a');
+            a.href = 'tel:' + m[1].replace(/[-\s]/g, '');
+            a.textContent = m[1];
+            a.style.cssText = 'color:#0071e3;text-decoration:underline;cursor:pointer;';
+            frag.appendChild(a);
+            last = pattern.lastIndex;
+        }
+        if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+        node.parentNode.replaceChild(frag, node);
+    });
+}
+
 function renderEditor(areaId) {
     const a = AREAS.find(x => x.id === areaId); if (!a) return;
     currentActiveId = areaId;
     document.getElementById("building-name").innerHTML = a.name;
-    document.getElementById("editor-body").innerHTML   = a.body;
+    const bodyEl = document.getElementById("editor-body");
+    bodyEl.innerHTML = a.body;
+    // 電話番号をタップ可能リンクに変換（表示のみ、保存データには影響しない）
+    linkifyPhoneNumbers(bodyEl);
 }
 function selectTab(areaId) { currentActiveId = areaId; renderSidebar(areaId); renderEditor(areaId); }
 function saveTitleChange() {
