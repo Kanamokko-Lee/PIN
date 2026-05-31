@@ -152,7 +152,38 @@
         .editor-container { flex: 1; padding: 30px 40px 100px 40px; overflow-y: auto; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
         .editable-title { font-size: 1.6rem; font-weight: bold; color: #1d1d1f; border-bottom: 2px solid #0071e3; padding-bottom: 8px; margin-bottom: 20px; outline: none; }
         .edit-block { outline: none; min-height: 350px; line-height: 1.6; font-size: 1.05rem; }
-        .map-img { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid #e5e5ea; border-radius: 8px; }
+        .map-img { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid #e5e5ea; border-radius: 8px; cursor: pointer; transition: outline 0.15s; }
+        .map-img.img-selected { outline: 3px solid #0071e3; outline-offset: 2px; }
+        /* 画像サイズ変更ポップアップ */
+        #img-resize-popup {
+            display: none; position: fixed; z-index: 500;
+            background: #fff; border: 1px solid #e5e5ea;
+            border-radius: 12px; padding: 12px 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+            min-width: 220px;
+        }
+        #img-resize-popup h4 { margin: 0 0 10px; font-size: 0.88rem; color: #1d1d1f; }
+        .resize-btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .resize-btn {
+            padding: 5px 10px; border: 1px solid #d1d1d6; border-radius: 6px;
+            background: #f5f5f7; font-size: 0.8rem; cursor: pointer;
+        }
+        .resize-btn:hover { background: #e5e5ea; }
+        .resize-custom-row { display: flex; gap: 6px; align-items: center; }
+        .resize-custom-row input {
+            flex: 1; padding: 5px 8px; font-size: 0.82rem;
+            border: 1px solid #d1d1d6; border-radius: 6px; outline: none;
+        }
+        .resize-custom-row input:focus { border-color: #0071e3; }
+        .resize-custom-row button {
+            padding: 5px 10px; background: #0071e3; color: #fff;
+            border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+        }
+        .resize-close-btn {
+            margin-top: 8px; width: 100%; padding: 6px;
+            background: #e5e5ea; border: none; border-radius: 6px;
+            font-size: 0.8rem; cursor: pointer;
+        }
 
         /* ── ツールバー ── */
         .bottom-toolbar {
@@ -252,6 +283,23 @@
     </style>
 </head>
 <body>
+
+<!-- 画像リサイズポップアップ -->
+<div id="img-resize-popup">
+    <h4>🖼 画像サイズ変更</h4>
+    <div class="resize-btn-row">
+        <button class="resize-btn" onclick="applyImgSize('25%')">25%</button>
+        <button class="resize-btn" onclick="applyImgSize('50%')">50%</button>
+        <button class="resize-btn" onclick="applyImgSize('75%')">75%</button>
+        <button class="resize-btn" onclick="applyImgSize('100%')">100%</button>
+    </div>
+    <div class="resize-custom-row">
+        <input type="text" id="img-resize-input" placeholder="例: 300px, 60%">
+        <button onclick="applyImgSizeCustom()">適用</button>
+    </div>
+    <button class="resize-close-btn" onclick="deleteSelectedImg()" style="background:#f8d7da;color:#842029;margin-bottom:4px;">🗑 この画像を削除</button>
+    <button class="resize-close-btn" onclick="closeImgResize()">✕ 閉じる</button>
+</div>
 
 <!-- サイドバー -->
 <div id="sidebar" class="sidebar">
@@ -730,6 +778,10 @@ function _insertImgToEditor(url, width) {
     img.className = 'map-img';
     img.style.width = width;
     img.alt = 'image';
+    // 挿入直後もリサイズできるようにハンドラを付与
+    const handler = (e) => { e.preventDefault(); e.stopPropagation(); openImgResize(img, e); };
+    img.addEventListener('click', handler);
+    img.addEventListener('touchend', handler);
     const br1 = document.createElement('br');
     const br2 = document.createElement('br');
     if (_savedRange) {
@@ -1144,9 +1196,90 @@ function renderEditor(areaId) {
     document.getElementById("building-name").innerHTML = a.name;
     const bodyEl = document.getElementById("editor-body");
     bodyEl.innerHTML = a.body;
-    // 電話番号をタップ可能リンクに変換（表示のみ、保存データには影響しない）
     linkifyPhoneNumbers(bodyEl);
+    attachImgResizeHandlers(bodyEl);
 }
+
+// ── 画像リサイズ ──
+let _selectedImg = null;
+
+function attachImgResizeHandlers(container) {
+    container.querySelectorAll('img.map-img').forEach(img => {
+        // 重複登録防止
+        if (img.dataset.resizeAttached) return;
+        img.dataset.resizeAttached = '1';
+        const handler = (e) => {
+            e.preventDefault(); e.stopPropagation();
+            openImgResize(img, e);
+        };
+        img.addEventListener('click', handler);
+        img.addEventListener('touchend', handler);
+    });
+}
+
+function openImgResize(img, e) {
+    // 前の選択を解除
+    document.querySelectorAll('.map-img.img-selected').forEach(i => i.classList.remove('img-selected'));
+    _selectedImg = img;
+    img.classList.add('img-selected');
+
+    const popup = document.getElementById('img-resize-popup');
+    popup.style.display = 'block';
+
+    // ポップアップ位置: タップ位置の近く、画面内に収める
+    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const pw = popup.offsetWidth || 220;
+    const ph = popup.offsetHeight || 160;
+    let left = Math.min(clientX, window.innerWidth  - pw - 10);
+    let top  = Math.min(clientY + 10, window.innerHeight - ph - 10);
+    popup.style.left = Math.max(10, left) + 'px';
+    popup.style.top  = Math.max(10, top)  + 'px';
+
+    // 現在のwidthをinputに表示
+    document.getElementById('img-resize-input').value = img.style.width || '100%';
+}
+
+function applyImgSize(size) {
+    if (!_selectedImg) return;
+    _selectedImg.style.width = size;
+    saveBodyChange();
+    showToast(`📐 ${size} に変更しました`);
+}
+
+function applyImgSizeCustom() {
+    const val = document.getElementById('img-resize-input').value.trim();
+    if (!val) return;
+    applyImgSize(val);
+}
+
+function deleteSelectedImg() {
+    if (!_selectedImg) return;
+    if (!confirm("この画像を削除しますか？")) return;
+    // br要素も一緒に除去
+    const prev = _selectedImg.previousSibling;
+    const next = _selectedImg.nextSibling;
+    if (prev && prev.nodeName === 'BR') prev.remove();
+    if (next && next.nodeName === 'BR') next.remove();
+    _selectedImg.remove();
+    _selectedImg = null;
+    document.getElementById('img-resize-popup').style.display = 'none';
+    saveBodyChange();
+    showToast("🗑 画像を削除しました");
+}
+
+function closeImgResize() {
+    document.getElementById('img-resize-popup').style.display = 'none';
+    if (_selectedImg) { _selectedImg.classList.remove('img-selected'); _selectedImg = null; }
+}
+
+// ポップアップ外タップで閉じる
+document.addEventListener('click', (e) => {
+    const popup = document.getElementById('img-resize-popup');
+    if (popup && popup.style.display !== 'none' && !popup.contains(e.target) && !e.target.classList.contains('map-img')) {
+        closeImgResize();
+    }
+});
 function selectTab(areaId) { currentActiveId = areaId; renderSidebar(areaId); renderEditor(areaId); }
 function saveTitleChange() {
     const a = AREAS.find(x => x.id === currentActiveId);
