@@ -398,6 +398,7 @@ function handleDrop(e) {
         AREAS.splice(dragEndIndex, 0, item);
         renderSidebar(currentActiveId);
         triggerStorage();
+        triggerGistPush();
     }
 }
 function handleDragEnd() { this.classList.remove('dragging'); dragStartIndex = null; }
@@ -418,6 +419,7 @@ function handleTouchMove(e) {
             touchStartEl = item;
             renderSidebar(currentActiveId);
             triggerStorage();
+            triggerGistPush();
         }
     }
 }
@@ -563,6 +565,16 @@ function triggerStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(AREAS));
         showToast("💾 自動保存しました");
     }, 1000);
+}
+
+// 並び替え後にGistへ自動書き込み（1.5秒デバウンス）
+let gistPushTimeout = null;
+function triggerGistPush() {
+    if (!GIST_ID || !GIST_TOKEN) return;
+    clearTimeout(gistPushTimeout);
+    gistPushTimeout = setTimeout(() => {
+        pushToGist();
+    }, 1500);
 }
 function showToast(msg) {
     const t = document.getElementById("toast");
