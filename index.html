@@ -318,7 +318,8 @@ async function syncFromGist(force = false) {
         // キャッシュバスターを付けてブラウザキャッシュを回避
         const url = GIST_RAW_URL + "?t=" + Date.now();
         // Public Gistの取得はTokenなし（Authヘッダーがあると403になる）
-        const res = await fetch(url);
+        // cache: 'no-store' でiPhoneのキャッシュを完全に回避
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error("HTTP " + res.status);
         const parsed = await res.json();
         if (!Array.isArray(parsed) || parsed.length === 0 || !parsed[0].id) throw new Error("形式エラー");
