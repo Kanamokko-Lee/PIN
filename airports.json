@@ -1,21 +1,21 @@
 [
   {
-    "id": "ngo",
-    "name": "🇯🇵NGO 3 ビル: 44119# 3階",
-    "short": "NGO",
-    "lat": 34.858411,
-    "lng": 136.805382,
+    "id": "cts",
+    "name": "🇯🇵CTS 3　KKW:BD○○(前月)",
+    "short": "CTS",
+    "lat": 42.775227,
+    "lng": 141.692196,
     "radiusKm": 5.0,
-    "body": "<b>Dispatch後</b><br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style=\"background-color:#badbcc;color:#0f5132;\">4階</span> ➔ ターミナル<span style=\"background-color:#badbcc;color:#0f5132;\">3階</span><br><br><b>DOM</b> <span style=\"background-color:#f8d7da;color:#842029;font-weight:bold;\">G : 31<u>3</u>83#</span> ,<br><br><b>INT</b> <span style=\"background-color:#d1e7dd;color:#0f5132;font-weight:bold;\">G : 81<u>6</u>11#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35<u>8</u>9<br><br>2026/5/1リバイス<br><br><img src=\"https://i.imgur.com/2Pof6i0.png\" class=\"map-img\" alt=\"NGO-MAP\">"
+    "body": "ID使えるらしい↑<br><br>エレベータ、保安検査場 : <span style=\"background-color:#e2e3e5;font-weight:bold;\">30<u>1</u>7#</span><br><br>2511、？<br><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.1rem;\">G : 25<u>1</u>4,</span> <span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.1rem;\">PBB: 25<u>1</u>3</span><br><br>#14下クルーバス乗り場 : <span style=\"background-color:#e2e3e5;\">25(1)2</span><br>ホテルバス @警察署先<br><br>2026/5/1リバイス"
   },
   {
-    "id": "fuk",
-    "name": "🇯🇵FUK 2 ロビー➔1250E 3階",
-    "short": "FUK",
-    "lat": 33.585806,
-    "lng": 130.450654,
-    "radiusKm": 4.0,
-    "body": "<span style=\"color:#ff3b30;font-weight:bold;background-color:#f8d7da;\">G: 30<u>4</u>2E</span> 左回転<br><br><span style=\"color:#ff3b30;font-weight:bold;background-color:#f8d7da;\">PBB先端 : 52<u>0</u>9E</span> 左回転<br><br>OPEN/ ARR時 : <span style=\"background-color:#e2e3e5;\">30<u>4</u>2 E➔30<u>4</u>2 E</span><br>福岡昭和タクシー : 0120-408-860<br>ターミナル出て左に変わった<br><br>ロビーから : 「バックヤード」 <span style=\"background-color:#e2e3e5;\">399<u>4</u> E</span><br><br>2026/5/1リバイス"
+    "id": "nrt",
+    "name": "☀️NRT 3",
+    "short": "NRT",
+    "lat": 35.771986,
+    "lng": 140.39285,
+    "radiusKm": 5.0,
+    "body": "BAG : P29➔<b>M9</b>カウンターに変更<br><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.2rem;\">G : 08<u>7</u>4,</span> <span style=\"font-size:1.2rem;\">PBB: </span><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.2rem;\">01<u>3</u>3</span><br><br>あいうえ<span style=\"background-color:#fff3cd;\">お</span>"
   },
   {
     "id": "hnd",
@@ -27,22 +27,13 @@
     "body": "<b>DOM</b> <span style=\"background-color:#f8d7da;font-weight:bold;\">G : 72<u>6</u>6</span>, (-10/31)<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : <span style=\"background-color:#f8d7da;\">C0<u>2</u>25</span> (~10/31)<br><br><b>INT</b> <span style=\"background-color:#d1e7dd;font-weight:bold;\">G : 03<u>9</u>7</span> (~ 8/1)<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : <span style=\"background-color:#d1e7dd;\">38<u>0</u>4</span> (~ 4/30) <span style=\"color:#8e8e93;\">•••</span><br><br><b>出勤動線扉A : 54<u>8</u>0</b> (~11/1, 2時頃)<br>保安検査場逆流 : 99<u>0</u>9<br><br><br>2026/5/1リバイス<br><br><b>北側 F1<u>3</u>0</b>"
   },
   {
-    "id": "nrt",
-    "name": "☀️NRT 3",
-    "short": "NRT",
-    "lat": 35.771986,
-    "lng": 140.392850,
+    "id": "ngo",
+    "name": "🇯🇵NGO 3 ビル: 44119# 3階",
+    "short": "NGO",
+    "lat": 34.858411,
+    "lng": 136.805382,
     "radiusKm": 5.0,
-    "body": "BAG : P29➔<b>M9</b>カウンターに変更<br><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.2rem;\">G : 08<u>7</u>4,</span> <span style=\"font-size:1.2rem;\">PBB: </span><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.2rem;\">01<u>3</u>3</span><br><br>あいうえ<span style=\"background-color:#fff3cd;\">お</span>"
-  },
-  {
-    "id": "cts",
-    "name": "🇯🇵CTS 3　KKW:BD○○(前月)",
-    "short": "CTS",
-    "lat": 42.775227,
-    "lng": 141.692196,
-    "radiusKm": 5.0,
-    "body": "ID使えるらしい↑<br><br>エレベータ、保安検査場 : <span style=\"background-color:#e2e3e5;font-weight:bold;\">30<u>1</u>7#</span><br><br>2511、？<br><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.1rem;\">G : 25<u>1</u>4,</span> <span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.1rem;\">PBB: 25<u>1</u>3</span><br><br>#14下クルーバス乗り場 : <span style=\"background-color:#e2e3e5;\">25(1)2</span><br>ホテルバス @警察署先<br><br>2026/5/1リバイス"
+    "body": "<b>Dispatch後</b><br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style=\"background-color:#badbcc;color:#0f5132;\">4階</span> ➔ ターミナル<span style=\"background-color:#badbcc;color:#0f5132;\">3階</span><br><br><b>DOM</b> <span style=\"background-color:#f8d7da;color:#842029;font-weight:bold;\">G : 31<u>3</u>83#</span> ,<br><br><b>INT</b> <span style=\"background-color:#d1e7dd;color:#0f5132;font-weight:bold;\">G : 81<u>6</u>11#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35<u>8</u>9<br><br>2026/5/1リバイス<br><br><img src=\"https://i.imgur.com/2Pof6i0.png\" class=\"map-img\" alt=\"NGO-MAP\">"
   },
   {
     "id": "itm",
@@ -63,6 +54,15 @@
     "body": "エア棟<span style=\"background-color:#fff3cd;\">5</span>階 ＝ タ<span style=\"background-color:#fff3cd;\">3</span>階　<span style=\"background-color:#fff3cd;\">4</span>階へ<br>タ<u>4</u>階 ➔ <span style=\"background-color:#fff3cd;\">北側(遠い方)保安検査</span> ➔ 3階出国<br><br><span style=\"background-color:#d1e7dd;font-weight:bold;\">INT</span> 検査後 : <span style=\"background-color:#d1e7dd;\">50<u>3</u>1▽</span> (23~7時)<br><br><span style=\"background-color:#d1e7dd;font-weight:bold;font-size:1.2rem;\">G : 0<u>7</u>GG#</span> ,<br><br>PBB : 0<u>9</u>33# 螺旋 : 0<u>9</u>40<br><hr style=\"border:0;border-top:1px solid #e5e5ea;\"><br><span style=\"background-color:#f8d7da;font-weight:bold;\">DOM</span> 2F検査後 : 5<u>0</u>71▽<br><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.2rem;\">G : 0<u>9</u>GGE</span> ,<br><br>PBB : 0<u>9</u>33# 螺旋 : 0<u>9</u>40<br><br>2026/5/1　変更無し"
   },
   {
+    "id": "fuk",
+    "name": "🇯🇵FUK 2 ロビー➔1250E 3階",
+    "short": "FUK",
+    "lat": 33.585806,
+    "lng": 130.450654,
+    "radiusKm": 4.0,
+    "body": "<span style=\"color:#ff3b30;font-weight:bold;background-color:#f8d7da;\">G: 30<u>4</u>2E</span> 左回転<br><br><span style=\"color:#ff3b30;font-weight:bold;background-color:#f8d7da;\">PBB先端 : 52<u>0</u>9E</span> 左回転<br><br>OPEN/ ARR時 : <span style=\"background-color:#e2e3e5;\">30<u>4</u>2 E➔30<u>4</u>2 E</span><br>福岡昭和タクシー : 0120-408-860<br>ターミナル出て左に変わった<br><br>ロビーから : 「バックヤード」 <span style=\"background-color:#e2e3e5;\">399<u>4</u> E</span><br><br>2026/5/1リバイス"
+  },
+  {
     "id": "oka",
     "name": "🇯🇵OKA 3 ビル : *5<u>0</u>71#",
     "short": "OKA",
@@ -72,22 +72,13 @@
     "body": "<h3><span style=\"background-color:#d1e7dd;\">KKW 4階</span> 67<u>1</u>7E</h3><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.1rem;\">G : *6<u>3</u>74#</span> (~5/31)<br><br><span style=\"background-color:#f8d7da;font-weight:bold;font-size:1.1rem;\">PBB : ■2<u>0</u>18▼</span> (~5/31)<br><br><span style=\"color:#ff3b30;font-size:0.9rem;\">⚠️ 上記PINは5/31で期限切れ。要確認。</span><br><br>2026/5/1リバイス"
   },
   {
-    "id": "can",
-    "name": "🇨🇳CAN 3",
-    "short": "CAN",
-    "lat": 23.392436,
-    "lng": 113.298786,
-    "radiusKm": 5.0,
-    "body": "<b>PBB : 20<u>3</u>510レ</b><br><br>到着 : <br><br><br>出発 : <br>@ホテル<br>Dispatch Brief : ホテル2階 (W213)<br>PBBの暗証番号を聞く<br>終了後ホテル1階ロビー ➔ バスで空港3階　46ゲートから入る<br><br>@空港<br>手荷物 : Mカウンター<br>手荷物検査 : STAFF LANE ➔「<b>乗務員搭乗LIST</b>」、<b>パスポート、ID</b><br>税関 : 「税関申告書」を提出<br>出国 : CREW LANE ➔「<b>乗務員搭乗LIST</b>」「<b>GD</b>」提出"
-  },
-  {
-    "id": "pvg",
-    "name": "🇨🇳PVG 3",
-    "short": "PVG",
-    "lat": 31.143378,
-    "lng": 121.805214,
-    "radiusKm": 5.0,
-    "body": "<h3>外部点検 : 05<u>8</u>3#</h3>"
+    "id": "tsa",
+    "name": "🦷TSA 3 KKW : #6,5番下",
+    "short": "TSA",
+    "lat": 25.069722,
+    "lng": 121.551667,
+    "radiusKm": 4.0,
+    "body": "<h3>PBB : 34<u>1</u>9#</h3>"
   },
   {
     "id": "tpe",
@@ -99,12 +90,21 @@
     "body": "<b>D1ゲート反対側　業務用エレベーター</b>　<span style=\"background-color:#f8d7da;font-weight:bold;\">55<u>7</u>6</span><br><b>PBB</b> : 整備士、KI、委託作業員に依頼"
   },
   {
-    "id": "tsa",
-    "name": "🦷TSA 3 KKW : #6,5番下",
-    "short": "TSA",
-    "lat": 25.069722,
-    "lng": 121.551667,
-    "radiusKm": 4.0,
-    "body": "<h3>PBB : 34<u>1</u>9#</h3>"
+    "id": "pvg",
+    "name": "🇨🇳PVG 3",
+    "short": "PVG",
+    "lat": 31.143378,
+    "lng": 121.805214,
+    "radiusKm": 5.0,
+    "body": "<h3>外部点検 : 05<u>8</u>3#</h3>"
+  },
+  {
+    "id": "can",
+    "name": "🇨🇳CAN 3",
+    "short": "CAN",
+    "lat": 23.392436,
+    "lng": 113.298786,
+    "radiusKm": 5.0,
+    "body": "<b>PBB : 20<u>3</u>510レ</b><br><br>到着 : <br><br><br>出発 : <br>@ホテル<br>Dispatch Brief : ホテル2階 (W213)<br>PBBの暗証番号を聞く<br>終了後ホテル1階ロビー ➔ バスで空港3階　46ゲートから入る<br><br>@空港<br>手荷物 : Mカウンター<br>手荷物検査 : STAFF LANE ➔「<b>乗務員搭乗LIST</b>」、<b>パスポート、ID</b><br>税関 : 「税関申告書」を提出<br>出国 : CREW LANE ➔「<b>乗務員搭乗LIST</b>」「<b>GD</b>」提出"
   }
 ]
