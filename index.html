@@ -381,7 +381,7 @@
 <div id="img-modal-overlay" class="modal-overlay">
     <div class="modal-box">
         <h2>🖼 画像を挿入</h2>
-        <p style="font-size:0.82rem;color:#666;margin:0 0 12px;">端末から画像を選択するとGitHubの<b>images/</b>フォルダに自動保存され、本文に挿入されます。</p>
+        <p style="font-size:0.82rem;color:#666;margin:0 0 12px;">端末から画像を選択するとGitHubの<b>images/</b>フォルダに自動保存され、本文に挿入されます。<br>📐 サイズ変更・削除は画像を<b>長押し</b>（iPhoneは0.5秒）またはクリックでできます。</p>
 
         <!-- ファイル選択 -->
         <label style="font-size:0.82rem;font-weight:bold;color:#444;">画像ファイルを選択</label>
@@ -781,17 +781,23 @@ function _insertImgToEditor(url, width) {
     img.style.width = width;
     img.alt = 'image';
     img.contentEditable = 'false';
+    img.style.webkitUserSelect = 'none';
+    img.style.userSelect = 'none';
     img.addEventListener('click', (e) => {
         e.preventDefault(); e.stopPropagation();
         openImgResize(img, e);
     });
+    let _pt = null;
     img.addEventListener('touchstart', (e) => {
         e.stopPropagation();
+        const touch = e.touches[0];
+        _pt = setTimeout(() => {
+            openImgResize(img, { clientX: touch.clientX, clientY: touch.clientY });
+            if (navigator.vibrate) navigator.vibrate(40);
+        }, 500);
     }, { passive: true });
-    img.addEventListener('touchend', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        openImgResize(img, e);
-    }, { passive: false });
+    img.addEventListener('touchend',  () => clearTimeout(_pt), { passive: true });
+    img.addEventListener('touchmove', () => clearTimeout(_pt), { passive: true });
     const br1 = document.createElement('br');
     const br2 = document.createElement('br');
     if (_savedRange) {
@@ -1218,27 +1224,35 @@ function attachImgResizeHandlers(container) {
         if (img.dataset.resizeAttached) return;
         img.dataset.resizeAttached = '1';
         img.contentEditable = 'false';
+        img.style.webkitUserSelect = 'none';
+        img.style.userSelect = 'none';
 
-        // クリック（Mac/iPad）
+        // Mac/iPad: クリックでポップアップ
         img.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             openImgResize(img, e);
         });
 
-        // iPhone: touchstart/touchendの両方でpreventDefaultが必要
-        // passive:false で登録
+        // iPhone: 長押し（500ms）でポップアップ
+        let _pressTimer = null;
         img.addEventListener('touchstart', (e) => {
             e.stopPropagation();
-            // touchstartでpreventDefaultするとスクロールも止まるので
-            // ここではstopPropagationのみ
+            const touch = e.touches[0];
+            _pressTimer = setTimeout(() => {
+                openImgResize(img, { clientX: touch.clientX, clientY: touch.clientY });
+                // 振動フィードバック（対応端末）
+                if (navigator.vibrate) navigator.vibrate(40);
+            }, 500);
         }, { passive: true });
 
         img.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            openImgResize(img, e);
-        }, { passive: false });
+            clearTimeout(_pressTimer);
+        }, { passive: true });
+
+        img.addEventListener('touchmove', (e) => {
+            clearTimeout(_pressTimer);
+        }, { passive: true });
     });
 }
 
