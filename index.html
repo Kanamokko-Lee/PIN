@@ -73,6 +73,7 @@
         .tab-item.dragging { opacity: 0.4; background: #e5e5ea; }
         .tab-item:hover { background-color: #f1f1f4; }
         .tab-item.active { background-color: #e5e5ea; font-weight: bold; color: #1d1d1f; }
+        .tab-item.highlight-hnd { box-shadow: inset 0 0 0 2px #f5a623; border-left: 3px solid #f5a623; }
         .tab-title-area { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
         .tab-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tab-meta { font-size: 0.75rem; color: #8e8e93; font-weight: normal; }
@@ -622,7 +623,8 @@ function renderSidebar(activeId) {
     const isMobile = window.innerWidth <= 768;
     AREAS.forEach((area, index) => {
         const item = document.createElement("div");
-        item.className = `tab-item ${area.id === activeId ? 'active' : ''}`;
+        const isHnd = area.id === 'hnd';
+        item.className = `tab-item ${area.id === activeId ? 'active' : ''} ${isHnd ? 'highlight-hnd' : ''}`;
         item.setAttribute("draggable", isTabRenaming ? "false" : "true");
         item.setAttribute("data-index", index);
         item.addEventListener('dragstart', handleDragStart);
@@ -912,7 +914,7 @@ async function init() {
     // Gist設定を復元（PWA再起動時も引き継ぎ）
     // デフォルト値を埋め込み済み（未設定時はこれを使用）
     const DEFAULT_GIST_URL   = "https://gist.githubusercontent.com/Kanamokko-Lee/69bf85f5413113415ad596053f42d77d/raw/airports.json";
-    const DEFAULT_GIST_TOKEN = "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";
+    const DEFAULT_GIST_TOKEN = "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";
     const DEFAULT_GIST_ID    = "69bf85f5413113415ad596053f42d77d";
     try {
         const s = JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || "{}");
