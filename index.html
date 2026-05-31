@@ -778,10 +778,16 @@ function _insertImgToEditor(url, width) {
     img.className = 'map-img';
     img.style.width = width;
     img.alt = 'image';
-    // 挿入直後もリサイズできるようにハンドラを付与
-    const handler = (e) => { e.preventDefault(); e.stopPropagation(); openImgResize(img, e); };
-    img.addEventListener('click', handler);
-    img.addEventListener('touchend', handler);
+    img.contentEditable = 'false';
+    img.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openImgResize(img, e); });
+    img.addEventListener('touchstart', () => {
+        document.getElementById('editor-body').contentEditable = 'false';
+    }, { passive: true });
+    img.addEventListener('touchend', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        setTimeout(() => { document.getElementById('editor-body').contentEditable = 'true'; }, 300);
+        openImgResize(img, e);
+    });
     const br1 = document.createElement('br');
     const br2 = document.createElement('br');
     if (_savedRange) {
@@ -1205,15 +1211,30 @@ let _selectedImg = null;
 
 function attachImgResizeHandlers(container) {
     container.querySelectorAll('img.map-img').forEach(img => {
-        // 重複登録防止
         if (img.dataset.resizeAttached) return;
         img.dataset.resizeAttached = '1';
-        const handler = (e) => {
+
+        // contenteditable=false でiPhoneのカーソル挿入を防ぐ
+        img.contentEditable = 'false';
+
+        img.addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
             openImgResize(img, e);
-        };
-        img.addEventListener('click', handler);
-        img.addEventListener('touchend', handler);
+        });
+
+        // iPhone: touchstartで一時的にエディタのeditableをfalseに
+        img.addEventListener('touchstart', (e) => {
+            const editor = document.getElementById('editor-body');
+            editor.contentEditable = 'false';
+        }, { passive: true });
+
+        img.addEventListener('touchend', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            // エディタを編集可能に戻す
+            const editor = document.getElementById('editor-body');
+            setTimeout(() => { editor.contentEditable = 'true'; }, 300);
+            openImgResize(img, e);
+        });
     });
 }
 
@@ -1470,12 +1491,21 @@ function startGpsTracking() {
     navigator.geolocation.watchPosition(
         (pos) => {
             const { latitude: uLat, longitude: uLng } = pos.coords;
-            const matched = AREAS.find(a => getDistanceKm(uLat, uLng, a.lat, a.lng) <= a.radiusKm);
-            if (matched) {
-                setGpsStatus("📍 連動: " + matched.short, "gps-active");
-                if (currentActiveId !== matched.id) selectTab(matched.id);
+            // 最近傍のスポットを選択（範囲内外に関わらず）
+            let nearest = null, minDist = Infinity;
+            for (const area of AREAS) {
+                if (!area.lat && !area.lng) continue;
+                const d = getDistanceKm(uLat, uLng, area.lat, area.lng);
+                if (d < minDist) { minDist = d; nearest = area; }
+            }
+            if (nearest) {
+                const distStr = minDist < 1
+                    ? Math.round(minDist * 1000) + "m"
+                    : minDist.toFixed(1) + "km";
+                setGpsStatus(`📍 ${nearest.short} (${distStr})`, "gps-active");
+                if (currentActiveId !== nearest.id) selectTab(nearest.id);
             } else {
-                setGpsStatus("📡 エリア外", "");
+                setGpsStatus("📡 GPS取得中", "");
             }
         },
         () => setGpsStatus("🔒 GPS手動", ""),
