@@ -209,9 +209,9 @@
     <div class="top-bar">
         <div id="gps-status" class="status-badge">GPS初期化中...</div>
         <div class="io-btn-group">
+            <button onclick="syncFromGist(true)" class="file-input-btn">↓ 取得</button>
             <button onclick="openSettingModal()" class="setting-btn">⚙️ Gist</button>
-            <button onclick="syncFromGist(true)"  class="file-input-btn">↓ 取得</button>
-            <button onclick="pushToGist()"         class="sync-btn">↑ 更新</button>
+            <button id="push-btn" onclick="pushToGist()" class="sync-btn">↑ 更新</button>
         </div>
     </div>
 
@@ -221,8 +221,10 @@
     </div>
 
     <div class="bottom-toolbar">
-        <select class="toolbar-item" onchange="execCustomFontSize(this.value); this.value='';">
+        <select id="font-size-select" class="toolbar-item" onchange="execCustomFontSize(this.value);">
             <option value="" selected>サイズ</option>
+            <option value="8pt">8pt</option>
+            <option value="10pt">10pt</option>
             <option value="12pt">12pt (小)</option>
             <option value="14pt">14pt (標準)</option>
             <option value="16pt">16pt (中)</option>
@@ -349,7 +351,9 @@ async function syncFromGist(force = false) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(AREAS));
         setGpsStatus("✅ Gist同期済", "sync-ok");
         showToast("✅ Gistから最新データを取得しました");
-        selectTab(AREAS[0].id);
+        // 現在のタブが取得後も存在すれば維持、なければ先頭へ
+        const stillExists = AREAS.find(a => a.id === currentActiveId);
+        selectTab(stillExists ? currentActiveId : AREAS[0].id);
         setTimeout(() => startGpsTracking(), 2000);
     } catch (e) {
         setGpsStatus("❌ 取得失敗", "sync-err");
@@ -391,6 +395,7 @@ async function pushToGist() {
         }
         setGpsStatus("✅ Gist更新済", "sync-ok");
         showToast("✅ Gistを更新しました");
+        markSaved();
         setTimeout(() => startGpsTracking(), 2000);
     } catch (e) {
         setGpsStatus("❌ 書込失敗", "sync-err");
@@ -451,6 +456,15 @@ function handleTouchEnd() { dragStartIndex = null; touchStartEl = null; lastSwap
 // スワイプ開閉
 // ============================================================
 let touchStartX = 0, touchStartY = 0;
+// selectionchangeでフォントサイズselectを更新
+document.addEventListener('selectionchange', () => {
+    const active = document.activeElement;
+    const editor = document.getElementById('editor-body');
+    if (editor && (editor.contains(active) || document.activeElement === editor)) {
+        updateFontSizeSelect();
+    }
+});
+
 function initSwipeDetection() {
     const zone = document.getElementById('swipe-zone');
     zone.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }, { passive: true });
@@ -486,6 +500,29 @@ function execCustomFontSize(size) {
         sel.addRange(nr);
     } catch (e) { document.execCommand("fontSize", false, "3"); }
     saveBodyChange();
+    // 選択後もselectに適用したサイズを表示
+    const sel2 = document.getElementById("font-size-select");
+    if (sel2) sel2.value = size;
+}
+
+// 選択範囲のフォントサイズを読み取ってselectに反映
+function updateFontSizeSelect() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const node = sel.anchorNode;
+    if (!node) return;
+    const el = node.nodeType === 3 ? node.parentElement : node;
+    const computed = window.getComputedStyle(el).fontSize;
+    // px → pt 変換（おおよそ）
+    const px = parseFloat(computed);
+    if (isNaN(px)) return;
+    const pt = Math.round(px * 0.75);
+    const select = document.getElementById("font-size-select");
+    if (!select) return;
+    const ptStr = pt + "pt";
+    // リストにある値なら選択、なければ先頭に戻す
+    const match = Array.from(select.options).find(o => o.value === ptStr);
+    select.value = match ? ptStr : "";
 }
 
 // ============================================================
@@ -516,9 +553,18 @@ function renderSidebar(activeId) {
         };
         const titleText = isMobile ? (area.short || area.id.toUpperCase()) : area.name;
         const metaText  = isMobile ? "" : `<span class="tab-meta">${area.radiusKm}km 監視</span>`;
+        // iPhoneタブ: nameの先頭spanのcolor/backgroundを抽出して色を合わせる
+        let tabColor = "";
+        let tabBg    = "";
+        if (isMobile) {
+            const colorMatch = area.name.match(/color:\s*(#[0-9a-fA-F]{3,6}|rgb[^;)"]+)/);
+            const bgMatch    = area.name.match(/background-color:\s*(#[0-9a-fA-F]{3,6}|rgb[^;)"]+)/);
+            if (colorMatch) tabColor = `color:${colorMatch[1]};`;
+            if (bgMatch)    tabBg    = `background-color:${bgMatch[1]};border-radius:4px;padding:1px 4px;`;
+        }
         item.innerHTML = `
             <div class="tab-title-area" id="title-container-${area.id}">
-                <span class="tab-title-text" style="font-weight:600;">${titleText}</span>
+                <span class="tab-title-text" style="font-weight:600;${tabColor}${tabBg}">${titleText}</span>
                 ${metaText}
             </div>
             <button class="rename-btn" onclick="enableTabRename('${area.id}', event)">📝</button>
@@ -612,8 +658,25 @@ function renderEditor(areaId) {
     document.getElementById("editor-body").innerHTML   = a.body;
 }
 function selectTab(areaId) { currentActiveId = areaId; renderSidebar(areaId); renderEditor(areaId); }
-function saveTitleChange() { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.name = document.getElementById("building-name").innerHTML; renderSidebar(currentActiveId); triggerStorage(); } }
-function saveBodyChange()  { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.body = document.getElementById("editor-body").innerHTML; triggerStorage(); } }
+function saveTitleChange() { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.name = document.getElementById("building-name").innerHTML; renderSidebar(currentActiveId); triggerStorage(); markUnsaved(); } }
+function saveBodyChange()  { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.body = document.getElementById("editor-body").innerHTML; triggerStorage(); markUnsaved(); } }
+
+function markUnsaved() {
+    const btn = document.getElementById("push-btn");
+    if (btn) {
+        btn.style.background = "#ff3b30";
+        btn.style.boxShadow  = "0 0 8px rgba(255,59,48,0.7)";
+        btn.innerText = "↑ 未反映";
+    }
+}
+function markSaved() {
+    const btn = document.getElementById("push-btn");
+    if (btn) {
+        btn.style.background = "#0071e3";
+        btn.style.boxShadow  = "";
+        btn.innerText = "↑ 更新";
+    }
+}
 
 function triggerStorage() {
     clearTimeout(saveTimeout);
