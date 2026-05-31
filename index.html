@@ -22,7 +22,7 @@
 
         /* ── サイドバー ── */
         .sidebar {
-            width: 260px;
+            width: 140px;
             background: #f9f9fb;
             border-right: 1px solid #e5e5ea;
             display: flex; flex-direction: column;
@@ -62,7 +62,7 @@
         }
         .add-tab-btn:hover { background: #005bb5; }
         .tab-item {
-            padding: 14px 16px; cursor: grab;
+            padding: 10px 10px; cursor: grab;
             border-bottom: 1px solid #f1f1f4;
             font-size: 0.95rem; color: #3a3a3c;
             display: flex; justify-content: space-between; align-items: center;
@@ -242,6 +242,8 @@
             <option value="18pt">18pt (大)</option>
             <option value="24pt">24pt (特大)</option>
         </select>
+        <button class="toolbar-item" onclick="execCmd('undo')" title="元に戻す (⌘Z)" style="width:34px;">↩</button>
+        <button class="toolbar-item" onclick="execCmd('redo')" title="やり直し (⌘⇧Z)" style="width:34px;">↪</button>
         <button class="toolbar-item" onclick="execCmd('bold')"      style="font-weight:bold;width:34px;">B</button>
         <button class="toolbar-item" onclick="execCmd('underline')" style="text-decoration:underline;font-weight:bold;width:34px;">U</button>
         <select class="toolbar-item" onchange="execCmd('foreColor', this.value); this.value='';">
@@ -467,6 +469,30 @@ function handleTouchEnd() { dragStartIndex = null; touchStartEl = null; lastSwap
 // スワイプ開閉
 // ============================================================
 let touchStartX = 0, touchStartY = 0;
+// ── キーボードショートカット ──
+document.addEventListener('keydown', (e) => {
+    const editor = document.getElementById('editor-body');
+    const title  = document.getElementById('building-name');
+    const active = document.activeElement;
+    const inEditor = (active === editor || active === title);
+    if (!inEditor) return;
+
+    const isMac = navigator.platform.toUpperCase().includes('MAC') || navigator.userAgent.includes('Mac');
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+    if (!mod) return;
+
+    switch (e.key.toLowerCase()) {
+        case 'b': e.preventDefault(); execCmd('bold'); break;
+        case 'u': e.preventDefault(); execCmd('underline'); break;
+        case 'i': e.preventDefault(); execCmd('italic'); break;
+        case 'z':
+            e.preventDefault();
+            if (e.shiftKey) execCmd('redo');
+            else            execCmd('undo');
+            break;
+    }
+});
+
 // selectionchangeでフォントサイズselectを更新
 document.addEventListener('selectionchange', () => {
     const active = document.activeElement;
