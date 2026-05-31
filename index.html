@@ -658,7 +658,18 @@ function renderEditor(areaId) {
     document.getElementById("editor-body").innerHTML   = a.body;
 }
 function selectTab(areaId) { currentActiveId = areaId; renderSidebar(areaId); renderEditor(areaId); }
-function saveTitleChange() { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.name = document.getElementById("building-name").innerHTML; renderSidebar(currentActiveId); triggerStorage(); markUnsaved(); } }
+function saveTitleChange() {
+    const a = AREAS.find(x => x.id === currentActiveId);
+    if (!a) return;
+    a.name = document.getElementById("building-name").innerHTML;
+    renderSidebar(currentActiveId);
+    triggerStorage();
+    markUnsaved();
+    // 新規追加タブ（lat=0, lng=0）のときだけジオコーディングを実行
+    if (a.lat === 0 && a.lng === 0) {
+        geocodeAndSave(a);
+    }
+}
 function saveBodyChange()  { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.body = document.getElementById("editor-body").innerHTML; triggerStorage(); markUnsaved(); } }
 
 function markUnsaved() {
@@ -675,6 +686,61 @@ function markSaved() {
         btn.style.background = "#0071e3";
         btn.style.boxShadow  = "";
         btn.innerText = "↑ 更新";
+    }
+}
+
+// ============================================================
+// Geocoding: タイトルから緯度経度を自動取得
+// Nominatim (OpenStreetMap) を使用 - 無料・登録不要
+// ============================================================
+async function geocodeAndSave(areaData) {
+    // タイトルからプレーンテキストを取得
+    const tmp = document.createElement("div");
+    tmp.innerHTML = areaData.name;
+    const query = tmp.innerText.trim();
+    if (!query || query === "新しい空港") return;
+
+    showToast("🔍 位置情報を検索中...");
+
+    try {
+        // まず空港コード（3レター）として検索
+        const isIataLike = /^[A-Z]{3}$/.test(query.replace(/[^A-Z]/g, '').substring(0, 3));
+        const searchQuery = isIataLike
+            ? query + " airport"
+            : query;
+
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&accept-language=ja`;
+        const res = await fetch(url, {
+            headers: { "User-Agent": "StationPINApp/1.0" }
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const results = await res.json();
+
+        if (results.length === 0) {
+            showToast("⚠️ 位置情報が見つかりませんでした");
+            return;
+        }
+
+        const { lat, lon, type, class: cls } = results[0];
+        areaData.lat = parseFloat(lat);
+        areaData.lng = parseFloat(lon);
+
+        // 空港・施設なら5km、それ以外の地名なら0.1km（100m）
+        const isAirport = cls === "aeroway" || type === "aerodrome" || type === "airport"
+                       || searchQuery.includes("airport") || searchQuery.includes("空港");
+        areaData.radiusKm = isAirport ? 5.0 : 0.1;
+
+        const radiusLabel = isAirport ? "半径5km" : "半径100m";
+        showToast(`📍 取得: ${lat.substring(0,8)}, ${lon.substring(0,9)} (${radiusLabel})`);
+
+        triggerStorage();
+        markUnsaved();
+        triggerGistPush();
+        renderSidebar(currentActiveId);
+
+    } catch (e) {
+        showToast("❌ 位置情報の取得に失敗: " + e.message);
+        console.error(e);
     }
 }
 
