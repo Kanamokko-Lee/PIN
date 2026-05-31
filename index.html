@@ -87,6 +87,7 @@
         .tab-item:hover { background-color: #f1f1f4; }
         .tab-item.active { background-color: #e5e5ea; font-weight: bold; color: #1d1d1f; }
         .tab-item.highlight-hnd { box-shadow: inset 0 0 0 2px #f5a623; border-left: 3px solid #f5a623; }
+        .tab-item.highlight-china .tab-title-text { color: #ff3b30 !important; }
         .tab-title-area { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
         .tab-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tab-meta { font-size: 0.75rem; color: #8e8e93; font-weight: normal; }
@@ -104,6 +105,18 @@
             padding: calc(10px + env(safe-area-inset-top)) 20px 10px 20px;
             border-bottom: 1px solid #e5e5ea; background: #fff;
             display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        }
+        .top-row1 { display: flex; align-items: center; gap: 6px; }
+        .top-row2 { display: flex; align-items: center; gap: 6px; }
+        @media screen and (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                padding-bottom: 8px;
+            }
+            .top-row1 { justify-content: space-between; }
+            .top-row2 { justify-content: flex-end; }
         }
         .status-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; background: #e5e5ea; color: #48484a; font-weight: 500; }
         .status-badge.gps-active { background: #d1e7dd; color: #0f5132; }
@@ -244,13 +257,15 @@
     <button class="toggle-sidebar-trigger" onclick="toggleSidebar()">⇄</button>
 
     <div class="top-bar">
-        <div style="display:flex;align-items:center;gap:6px;">
+        <!-- 上段: GPS・最寄・Gist設定 -->
+        <div class="top-row1">
             <div id="gps-status" class="status-badge">GPS初期化中...</div>
             <button onclick="jumpToNearest()" class="nearest-btn" title="一番近いスポットを開く">最寄</button>
-        </div>
-        <div class="io-btn-group">
-            <button onclick="syncFromGist(true)" class="file-input-btn">↓ 取得</button>
             <button onclick="openSettingModal()" class="setting-btn">⚙️ Gist</button>
+        </div>
+        <!-- 下段: 取得・更新 -->
+        <div class="top-row2">
+            <button onclick="syncFromGist(true)" class="file-input-btn">↓ 取得</button>
             <button id="push-btn" onclick="pushToGist()" class="sync-btn">↑ 更新</button>
         </div>
     </div>
@@ -654,7 +669,8 @@ function renderSidebar(activeId) {
     AREAS.forEach((area, index) => {
         const item = document.createElement("div");
         const isHnd = area.id === 'hnd';
-        item.className = `tab-item ${area.id === activeId ? 'active' : ''} ${isHnd ? 'highlight-hnd' : ''}`;
+        const isChinese = area.id === 'pvg' || area.id === 'can';
+        item.className = `tab-item ${area.id === activeId ? 'active' : ''} ${isHnd ? 'highlight-hnd' : ''} ${isChinese ? 'highlight-china' : ''}`;
         item.setAttribute("draggable", "false"); // ハンドルのmousedownで有効化
         item.setAttribute("data-index", index);
         item.addEventListener('dragstart', handleDragStart);
