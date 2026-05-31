@@ -323,8 +323,40 @@
             <option value="transparent">❌ 消去</option>
         </select>
         <button class="toolbar-item" onclick="promptRenameCurrent()" style="font-size:0.75rem;">名称変更</button>
+        <button class="toolbar-item" onclick="insertImageFromUrl()" style="font-size:0.75rem;">🖼画像</button>
         <button class="toolbar-item" onclick="fetchGeoForCurrent()" style="font-size:0.75rem;background:#d1e7dd;color:#0f5132;">📍緯度経度</button>
         <button class="toolbar-item" onclick="deleteCurrentArea()" style="font-size:0.75rem;background:#f8d7da;color:#842029;">🗑削除</button>
+    </div>
+</div>
+
+<!-- 画像挿入モーダル -->
+<div id="img-modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+        <h2>🖼 画像を挿入</h2>
+        <p style="font-size:0.82rem;color:#666;margin:0 0 12px;">端末から画像を選択するとGitHubの<b>images/</b>フォルダに自動保存され、本文に挿入されます。</p>
+
+        <!-- ファイル選択 -->
+        <label style="font-size:0.82rem;font-weight:bold;color:#444;">画像ファイルを選択</label>
+        <input type="file" id="input-img-file" accept="image/*" style="margin-bottom:10px;width:100%;font-size:0.85rem;">
+
+        <!-- プレビュー -->
+        <img id="img-preview" style="display:none;max-width:100%;max-height:160px;border-radius:8px;margin-bottom:10px;border:1px solid #e5e5ea;">
+
+        <!-- 幅指定 -->
+        <label style="font-size:0.82rem;font-weight:bold;color:#444;">表示幅（省略可、例: 100%、300px）</label>
+        <input type="text" id="input-img-width" placeholder="100%" style="margin-bottom:6px;">
+
+        <!-- 進捗 -->
+        <div id="img-upload-status" style="font-size:0.82rem;color:#0071e3;min-height:1.2em;margin-bottom:8px;"></div>
+
+        <div class="modal-row">
+            <button class="modal-btn primary"   onclick="uploadAndInsertImage()">📤 アップロード＆挿入</button>
+            <button class="modal-btn secondary" onclick="closeImgModal()">キャンセル</button>
+        </div>
+        <div class="modal-hint">
+            保存先: <b>Kanamokko-Lee/PIN</b> の <b>images/</b> フォルダ<br>
+            tokenに <b>repo</b> スコープが必要です
+        </div>
     </div>
 </div>
 
@@ -584,6 +616,133 @@ function toggleSidebar() { document.getElementById('sidebar').classList.toggle('
 // エディタコマンド
 // ============================================================
 function execCmd(command, value = null) { document.execCommand(command, false, value); saveBodyChange(); }
+
+// ── 画像挿入（GitHubアップロード） ──
+const GITHUB_REPO  = "Kanamokko-Lee/PIN";
+const GITHUB_BRANCH = "main";
+const IMG_FOLDER   = "images";
+
+let _savedRange = null;
+
+function insertImageFromUrl() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount) _savedRange = sel.getRangeAt(0).cloneRange();
+    // リセット
+    document.getElementById('input-img-file').value  = '';
+    document.getElementById('input-img-width').value = '';
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('img-upload-status').textContent = '';
+    document.getElementById('img-modal-overlay').classList.add('open');
+}
+
+// ファイル選択時プレビュー表示
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('input-img-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const preview = document.getElementById('img-preview');
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+function closeImgModal() {
+    document.getElementById('img-modal-overlay').classList.remove('open');
+}
+
+async function uploadAndInsertImage() {
+    const fileInput = document.getElementById('input-img-file');
+    const width     = document.getElementById('input-img-width').value.trim() || '100%';
+    const statusEl  = document.getElementById('img-upload-status');
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showToast("⚠️ 画像ファイルを選択してください"); return;
+    }
+    if (!GIST_TOKEN) {
+        showToast("⚠️ Tokenを設定してください"); return;
+    }
+
+    const file = fileInput.files[0];
+    // ファイル名: タイムスタンプ付きで一意に
+    const ext      = file.name.split('.').pop().toLowerCase();
+    const filename = `img_${Date.now()}.${ext}`;
+    const path     = `${IMG_FOLDER}/${filename}`;
+
+    statusEl.textContent = "📤 GitHubにアップロード中...";
+
+    try {
+        // Base64変換
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = (e) => resolve(e.target.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        // GitHub Contents API: ファイル作成
+        const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+        const res = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${GIST_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `Add image ${filename}`,
+                content: base64,
+                branch: GITHUB_BRANCH
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'HTTP ' + res.status);
+        }
+
+        // GitHub Pages URL
+        const imgUrl = `https://kanamokko-lee.github.io/PIN/${path}`;
+        statusEl.textContent = "✅ アップロード完了！";
+
+        closeImgModal();
+        _insertImgToEditor(imgUrl, width);
+        showToast("✅ 画像をアップロードしました");
+
+    } catch (e) {
+        statusEl.textContent = "❌ 失敗: " + e.message;
+        console.error(e);
+    }
+}
+
+function _insertImgToEditor(url, width) {
+    const editor = document.getElementById('editor-body');
+    editor.focus();
+    if (_savedRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_savedRange);
+    }
+    const img = document.createElement('img');
+    img.src = url;
+    img.className = 'map-img';
+    img.style.width = width;
+    img.alt = 'image';
+    const br1 = document.createElement('br');
+    const br2 = document.createElement('br');
+    if (_savedRange) {
+        _savedRange.deleteContents();
+        const frag = document.createDocumentFragment();
+        frag.appendChild(br1); frag.appendChild(img); frag.appendChild(br2);
+        _savedRange.insertNode(frag);
+        _savedRange = null;
+    } else {
+        editor.appendChild(br1); editor.appendChild(img); editor.appendChild(br2);
+    }
+    saveBodyChange();
+}
 function execCustomFontSize(size) {
     if (!size) return;
     const sel = window.getSelection();
