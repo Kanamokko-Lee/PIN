@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Station PIN Codes</title>
+    <title>PIN</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PIN">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="manifest" href="manifest.json">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -185,6 +190,12 @@
             .bottom-toolbar { height: calc(54px + env(safe-area-inset-bottom)); gap: 4px; padding: 6px 4px 0 4px; }
             .toolbar-item { padding: 4px 6px; font-size: 0.75rem; height: 34px; }
             select.toolbar-item { padding: 4px 16px 4px 4px; background-position: right 4px center; }
+        }
+        /* ── PWAスタンドアロン: 上部余白（ボタン高さ36px の120% ≒ 44px） ── */
+        @media all and (display-mode: standalone) {
+            .top-bar {
+                padding-top: calc(44px + env(safe-area-inset-top)) !important;
+            }
         }
     </style>
 </head>
@@ -526,9 +537,43 @@ function updateFontSizeSelect() {
 }
 
 // ============================================================
+// short 自動生成: bodyの最初のテキスト中の最初の英字から3~4文字
+// ============================================================
+function deriveShort(body) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = body;
+    const text = tmp.innerText || "";
+    // 最初の行を取得
+    const firstLine = text.split("\n")[0];
+    // 最初の英大文字（またはASCII英字）の位置から3~4文字
+    const m = firstLine.match(/[A-Za-z]{3,4}/);
+    if (m) return m[0].toUpperCase().substring(0, 4);
+    // 英字がなければ先頭3文字（絵文字除去）
+    const plain = firstLine.replace(/[^\u0021-\u007E\u3040-\u30FF\u4E00-\u9FFF]/g, "").trim();
+    return plain.substring(0, 3) || "---";
+}
+
+// short に対応する色をbodyのspanから抽出
+function deriveShortColor(body, shortText) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = body;
+    // shortの文字列を含むspanを探す
+    const spans = tmp.querySelectorAll("span");
+    for (const span of spans) {
+        if (span.innerText && span.innerText.includes(shortText.replace(/[^A-Za-z0-9]/g,""))) {
+            const color = span.style.color;
+            const bg    = span.style.backgroundColor;
+            return { color: color || "", bg: bg || "" };
+        }
+    }
+    return { color: "", bg: "" };
+}
+
+// ============================================================
 // サイドバー描画
-// iPhone: short（絵文字なし3〜4文字コード）を表示
-// iPad  : name フルテキストを表示
+// 全デバイス共通: short を表示
+// iPad/Mac: short + radiusKm監視 を表示
+// short の色は body の該当spanに合わせる
 // ============================================================
 function renderSidebar(activeId) {
     const listEl = document.getElementById("tab-list"); if (!listEl) return;
@@ -551,20 +596,22 @@ function renderSidebar(activeId) {
             if (area.id === currentActiveId && isMobile) enableTabRename(area.id, e);
             else selectTab(area.id);
         };
-        const titleText = isMobile ? (area.short || area.id.toUpperCase()) : area.name;
-        const metaText  = isMobile ? "" : `<span class="tab-meta">${area.radiusKm}km 監視</span>`;
-        // iPhoneタブ: nameの先頭spanのcolor/backgroundを抽出して色を合わせる
-        let tabColor = "";
-        let tabBg    = "";
-        if (isMobile) {
-            const colorMatch = area.name.match(/color:\s*(#[0-9a-fA-F]{3,6}|rgb[^;)"]+)/);
-            const bgMatch    = area.name.match(/background-color:\s*(#[0-9a-fA-F]{3,6}|rgb[^;)"]+)/);
-            if (colorMatch) tabColor = `color:${colorMatch[1]};`;
-            if (bgMatch)    tabBg    = `background-color:${bgMatch[1]};border-radius:4px;padding:1px 4px;`;
-        }
+
+        // short: 保存済みがあればそれを使い、なければbodyから自動生成
+        const shortText = area.short || deriveShort(area.body);
+
+        // shortの色をbodyのspanから抽出
+        const { color: shortColor, bg: shortBg } = deriveShortColor(area.body, shortText);
+        let tabStyle = "font-weight:600;";
+        if (shortColor) tabStyle += `color:${shortColor};`;
+        if (shortBg)    tabStyle += `background-color:${shortBg};border-radius:4px;padding:1px 4px;`;
+
+        // iPad/Mac はshort＋監視距離を表示
+        const metaText = isMobile ? "" : `<span class="tab-meta">${area.radiusKm}km</span>`;
+
         item.innerHTML = `
             <div class="tab-title-area" id="title-container-${area.id}">
-                <span class="tab-title-text" style="font-weight:600;${tabColor}${tabBg}">${titleText}</span>
+                <span class="tab-title-text" style="${tabStyle}">${shortText}</span>
                 ${metaText}
             </div>
             <button class="rename-btn" onclick="enableTabRename('${area.id}', event)">📝</button>
@@ -670,7 +717,16 @@ function saveTitleChange() {
         geocodeAndSave(a);
     }
 }
-function saveBodyChange()  { const a = AREAS.find(x => x.id === currentActiveId); if (a) { a.body = document.getElementById("editor-body").innerHTML; triggerStorage(); markUnsaved(); } }
+function saveBodyChange()  {
+    const a = AREAS.find(x => x.id === currentActiveId);
+    if (!a) return;
+    a.body = document.getElementById("editor-body").innerHTML;
+    // bodyが変わったらshortを自動再生成
+    a.short = deriveShort(a.body);
+    renderSidebar(currentActiveId);
+    triggerStorage();
+    markUnsaved();
+}
 
 function markUnsaved() {
     const btn = document.getElementById("push-btn");
@@ -728,9 +784,9 @@ async function geocodeAndSave(areaData) {
         // 空港・施設なら5km、それ以外の地名なら0.1km（100m）
         const isAirport = cls === "aeroway" || type === "aerodrome" || type === "airport"
                        || searchQuery.includes("airport") || searchQuery.includes("空港");
-        areaData.radiusKm = isAirport ? 5.0 : 0.1;
+        areaData.radiusKm = isAirport ? 10.0 : 0.1;
 
-        const radiusLabel = isAirport ? "半径5km" : "半径100m";
+        const radiusLabel = isAirport ? "半径10km" : "半径100m";
         showToast(`📍 取得: ${lat.substring(0,8)}, ${lon.substring(0,9)} (${radiusLabel})`);
 
         triggerStorage();
@@ -815,7 +871,7 @@ const DEFAULT_AREAS = [
 ];
 
 async function init() {
-    // Gist設定を復元
+    // Gist設定を復元（PWA再起動時も引き継ぎ）
     try {
         const s = JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || "{}");
         GIST_RAW_URL = s.url   || "";
