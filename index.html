@@ -626,6 +626,49 @@ function updateFontSizeSelect() {
 }
 
 // ============================================================
+// 期限チェック: bodyから (~MM/DD) 等を抽出して期限状態を返す
+// 戻り値: 'expired' | 'soon' | null
+// ============================================================
+function checkExpiry(body) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = body;
+    const text = tmp.innerText || "";
+    // (~MM/DD) (~YYYY/MM/DD) (~MM/DD) の形式を検出
+    const patterns = [
+        /\(~(\d{4})\/(\d{1,2})\/(\d{1,2})\)/g,  // ~YYYY/MM/DD
+        /\(~(\d{1,2})\/(\d{1,2})\)/g,              // ~MM/DD
+        /〜(\d{4})\/(\d{1,2})\/(\d{1,2})/g,        // 〜YYYY/MM/DD
+        /〜(\d{1,2})\/(\d{1,2})/g,                   // 〜MM/DD
+    ];
+    const now = new Date();
+    const thisYear = now.getFullYear();
+    let earliest = null;
+
+    for (const pat of patterns) {
+        let m;
+        while ((m = pat.exec(text)) !== null) {
+            let d;
+            if (m.length === 4) {
+                // YYYY/MM/DD
+                d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]), 23, 59, 59);
+            } else {
+                // MM/DD → 今年または来年
+                const mo = parseInt(m[1])-1, dy = parseInt(m[2]);
+                d = new Date(thisYear, mo, dy, 23, 59, 59);
+                if (d < now) d = new Date(thisYear+1, mo, dy, 23, 59, 59);
+            }
+            if (!earliest || d < earliest) earliest = d;
+        }
+    }
+    if (!earliest) return null;
+    const diffMs = earliest - now;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    if (diffMs < 0) return 'expired';
+    if (diffDays <= 7) return 'soon';
+    return null;
+}
+
+// ============================================================
 // short 自動生成: nameの先頭が絵文字なら除去して最初の3文字
 // 例: "☀️HND3 F129..." → "HND"
 //     "🇯🇵NGO 3..."   → "NGO"
@@ -723,10 +766,20 @@ function renderSidebar(activeId) {
             tabStyle += `color:#34c759;`;
         } else if (rawName.includes('🇨🇳') || area.id === 'pvg' || area.id === 'can') {
             tabStyle += `color:#ff3b30;`;
+        } else if (area.id === 'itm') {
+            tabStyle += `color:#0071e3;`;
         } else {
             const { color: shortColor, bg: shortBg } = deriveShortColor(area.name, area.body, shortText);
             if (shortColor) tabStyle += `color:${shortColor};`;
             if (shortBg)    tabStyle += `background-color:${shortBg};border-radius:4px;padding:1px 4px;`;
+        }
+
+        // Mac/iPad: 期限マークを付加
+        let expiryMark = "";
+        if (!isMobile) {
+            const expiry = checkExpiry(area.body);
+            if (expiry === 'expired') expiryMark = ` <span style="font-size:0.85em;">❌</span>`;
+            else if (expiry === 'soon') expiryMark = ` <span style="font-size:0.85em;">⚠️</span>`;
         }
 
         // iPad/Mac はshort＋監視距離を表示
@@ -735,7 +788,7 @@ function renderSidebar(activeId) {
         item.innerHTML = `
             <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
             <div class="tab-title-area" id="title-container-${area.id}">
-                <span class="tab-title-text" style="${tabStyle}">${shortText}</span>
+                <span class="tab-title-text" style="${tabStyle}">${shortText}${expiryMark}</span>
                 ${metaText}
             </div>
             <button class="delete-btn" onclick="deleteArea('${area.id}', event)" title="削除">✕</button>
@@ -887,13 +940,14 @@ function addNewAirport() {
     }, 100);
 }
 
-// 電話番号をtel:リンクに変換（テキストノードのみ処理）
+// 電話番号をtel:リンクに変換
+// iPhoneのcontenteditable内ではaタグのhrefが無視されるため
+// touchendイベントで直接 location.href = tel: を発火させる
 function linkifyPhoneNumbers(el) {
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(node => {
-        // 日本の電話番号パターン: 0x0-xxxx-xxxx, 0xx-xxx-xxxx, 0120-xxx-xxx など
         const pattern = /(0\d{1,4}[-\s]?\d{2,4}[-\s]?\d{3,4})/g;
         const text = node.nodeValue;
         if (!pattern.test(text)) return;
@@ -902,11 +956,22 @@ function linkifyPhoneNumbers(el) {
         let last = 0, m;
         while ((m = pattern.exec(text)) !== null) {
             if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-            const a = document.createElement('a');
-            a.href = 'tel:' + m[1].replace(/[-\s]/g, '');
-            a.textContent = m[1];
-            a.style.cssText = 'color:#0071e3;text-decoration:underline;cursor:pointer;';
-            frag.appendChild(a);
+            const span = document.createElement('span');
+            const telNum = 'tel:' + m[1].replace(/[-\s]/g, '');
+            span.textContent = m[1];
+            span.setAttribute('data-tel', telNum);
+            span.style.cssText = 'color:#0071e3;text-decoration:underline;cursor:pointer;-webkit-user-select:none;';
+            // クリック（Mac/iPad）
+            span.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                window.location.href = telNum;
+            });
+            // タッチ終了（iPhone: contenteditable内でもこれなら発火する）
+            span.addEventListener('touchend', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                window.location.href = telNum;
+            });
+            frag.appendChild(span);
             last = pattern.lastIndex;
         }
         if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
