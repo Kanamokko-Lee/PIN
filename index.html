@@ -1485,13 +1485,24 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
     const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+let _lastGpsLat = null, _lastGpsLng = null;
+
 function startGpsTracking() {
     const el = document.getElementById("gps-status"); if (!el) return;
     if (!("geolocation" in navigator)) { el.innerText = "GPS非対応"; return; }
     navigator.geolocation.watchPosition(
         (pos) => {
             const { latitude: uLat, longitude: uLng } = pos.coords;
-            // 最近傍のスポットを選択（範囲内外に関わらず）
+
+            // 前回位置から100m以内の移動は無視
+            if (_lastGpsLat !== null && _lastGpsLng !== null) {
+                const movedKm = getDistanceKm(_lastGpsLat, _lastGpsLng, uLat, uLng);
+                if (movedKm < 0.1) return;
+            }
+            _lastGpsLat = uLat;
+            _lastGpsLng = uLng;
+
+            // 最近傍スポットを選択
             let nearest = null, minDist = Infinity;
             for (const area of AREAS) {
                 if (!area.lat && !area.lng) continue;
@@ -1509,7 +1520,7 @@ function startGpsTracking() {
             }
         },
         () => setGpsStatus("🔒 GPS手動", ""),
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+        { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
 }
 function manualRetry() { startGpsTracking(); }
