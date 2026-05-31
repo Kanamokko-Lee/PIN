@@ -1504,12 +1504,24 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 let _lastGpsLat = null, _lastGpsLng = null;
+let _gpsWatchId = null;
+let _gpsFailed  = false; // 取得失敗フラグ
 
 function startGpsTracking() {
     const el = document.getElementById("gps-status"); if (!el) return;
     if (!("geolocation" in navigator)) { el.innerText = "GPS非対応"; return; }
-    navigator.geolocation.watchPosition(
+
+    // 既存のwatchをクリアしてから再登録
+    if (_gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(_gpsWatchId);
+        _gpsWatchId = null;
+    }
+
+    _gpsFailed = false;
+
+    _gpsWatchId = navigator.geolocation.watchPosition(
         (pos) => {
+            _gpsFailed = false;
             const { latitude: uLat, longitude: uLng } = pos.coords;
 
             // 前回位置から100m以内の移動は無視
@@ -1537,11 +1549,36 @@ function startGpsTracking() {
                 setGpsStatus("📡 GPS取得中", "");
             }
         },
-        () => setGpsStatus("🔒 GPS手動", ""),
+        () => {
+            _gpsFailed = true;
+            setGpsStatus("🔒 GPS手動", "");
+        },
         { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
 }
+
 function manualRetry() { startGpsTracking(); }
+
+// フォアグラウンド復帰時にGPS失敗していたら再試行
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && _gpsFailed) {
+        setGpsStatus("🔄 GPS再取得中...", "syncing");
+        _lastGpsLat = null;
+        _lastGpsLng = null;
+        startGpsTracking();
+    }
+});
+
+// iOSのPWA: pageshow (バックグラウンドから戻った時) でも再試行
+window.addEventListener('pageshow', (e) => {
+    if (_gpsFailed) {
+        setGpsStatus("🔄 GPS再取得中...", "syncing");
+        _lastGpsLat = null;
+        _lastGpsLng = null;
+        startGpsTracking();
+    }
+});
+
 window.addEventListener('resize', () => renderSidebar(currentActiveId));
 
 // ============================================================
