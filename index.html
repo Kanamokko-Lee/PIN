@@ -703,8 +703,8 @@ async function uploadAndInsertImage() {
             throw new Error(err.message || 'HTTP ' + res.status);
         }
 
-        // GitHub Pages URL
-        const imgUrl = `https://kanamokko-lee.github.io/PIN/${path}`;
+        // raw.githubusercontent.com は即時反映（GitHub Pagesより速い）
+        const imgUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
         statusEl.textContent = "✅ アップロード完了！";
 
         closeImgModal();
