@@ -710,10 +710,19 @@ function renderSidebar(activeId) {
         // short: nameのタイトルから自動生成（bodyではなくnameが正）
         const shortText = deriveShort(area.name);
 
-        // tabColor: JSONに明示されていればそれを優先、なければname/bodyのspanから抽出
+        // tabColor優先順位:
+        // 1. JSONの tabColor フィールド
+        // 2. nameに🇹🇼が含まれる → 緑
+        // 3. nameに🇨🇳が含まれる → 赤
+        // 4. name/bodyのspanから自動抽出
         let tabStyle = "font-weight:600;";
+        const rawName = area.name || "";
         if (area.tabColor) {
             tabStyle += `color:${area.tabColor};`;
+        } else if (rawName.includes('🇹🇼') || area.id === 'tpe' || area.id === 'tsa') {
+            tabStyle += `color:#34c759;`;
+        } else if (rawName.includes('🇨🇳') || area.id === 'pvg' || area.id === 'can') {
+            tabStyle += `color:#ff3b30;`;
         } else {
             const { color: shortColor, bg: shortBg } = deriveShortColor(area.name, area.body, shortText);
             if (shortColor) tabStyle += `color:${shortColor};`;
