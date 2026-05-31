@@ -62,14 +62,28 @@
         }
         .add-tab-btn:hover { background: #005bb5; }
         .tab-item {
-            padding: 10px 10px; cursor: grab;
+            padding: 10px 6px 10px 4px; cursor: default;
             border-bottom: 1px solid #f1f1f4;
             font-size: 0.95rem; color: #3a3a3c;
             display: flex; justify-content: space-between; align-items: center;
             background: #f9f9fb; user-select: none;
             transition: background 0.2s, opacity 0.2s;
         }
-        .tab-item:active { cursor: grabbing; }
+        .tab-item:active { cursor: default; }
+        .drag-handle {
+            cursor: grab; flex-shrink: 0;
+            padding: 4px 5px; color: #bbb;
+            font-size: 1rem; line-height: 1;
+            touch-action: none;
+        }
+        .drag-handle:active { cursor: grabbing; }
+        .delete-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 0.78rem; padding: 2px 4px;
+            color: #ff3b30; opacity: 0; flex-shrink: 0;
+            transition: opacity 0.15s;
+        }
+        .tab-item:hover .delete-btn { opacity: 1; }
         .tab-item.dragging { opacity: 0.4; background: #e5e5ea; }
         .tab-item:hover { background-color: #f1f1f4; }
         .tab-item.active { background-color: #e5e5ea; font-weight: bold; color: #1d1d1f; }
@@ -97,6 +111,13 @@
         .status-badge.syncing    { background: #cfe2ff; color: #084298; }
         .status-badge.sync-ok    { background: #d1e7dd; color: #0f5132; }
         .status-badge.sync-err   { background: #f8d7da; color: #842029; }
+        .nearest-btn {
+            font-size: 0.78rem; font-weight: bold; cursor: pointer;
+            padding: 4px 9px; background: #34c759; color: white;
+            border: none; border-radius: 6px;
+        }
+        .nearest-btn:hover { background: #28a745; }
+        .nearest-btn:active { transform: scale(0.95); }
         .io-btn-group { display: flex; gap: 6px; }
         .sync-btn      { font-size: 0.8rem; font-weight: bold; cursor: pointer; padding: 5px 10px; background: #0071e3; color: white; border: none; border-radius: 6px; }
         .file-input-btn{ font-size: 0.8rem; font-weight: bold; cursor: pointer; padding: 5px 10px; background: #e5e5ea; color: #333;  border: none; border-radius: 6px; }
@@ -181,7 +202,7 @@
         @media screen and (max-width: 768px) {
             .sidebar { width: 60px; }
             .sidebar-header { padding: calc(8px + env(safe-area-inset-top)) 2px 8px 2px; flex-direction: column; gap: 4px; }
-            .sidebar-header span, .tab-meta, .rename-btn { display: none !important; }
+            .sidebar-header span, .tab-meta, .rename-btn, .delete-btn, .drag-handle { display: none !important; }
             .sidebar-header button { font-size: 0.65rem; padding: 2px 0; width: 90%; text-align: center; }
             .tab-item { padding: 14px 2px; justify-content: center; text-align: center; font-size: 0.85rem; }
             .tab-title-text { font-size: 0.85rem; text-align: center; width: 100%; display: block; }
@@ -219,7 +240,10 @@
     <button class="toggle-sidebar-trigger" onclick="toggleSidebar()">⇄</button>
 
     <div class="top-bar">
-        <div id="gps-status" class="status-badge">GPS初期化中...</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <div id="gps-status" class="status-badge">GPS初期化中...</div>
+            <button onclick="jumpToNearest()" class="nearest-btn" title="一番近いスポットを開く">最寄</button>
+        </div>
         <div class="io-btn-group">
             <button onclick="syncFromGist(true)" class="file-input-btn">↓ 取得</button>
             <button onclick="openSettingModal()" class="setting-btn">⚙️ Gist</button>
@@ -263,6 +287,8 @@
             <option value="transparent">❌ 消去</option>
         </select>
         <button class="toolbar-item" onclick="promptRenameCurrent()" style="font-size:0.75rem;">名称変更</button>
+        <button class="toolbar-item" onclick="fetchGeoForCurrent()" style="font-size:0.75rem;background:#d1e7dd;color:#0f5132;">📍緯度経度</button>
+        <button class="toolbar-item" onclick="deleteCurrentArea()" style="font-size:0.75rem;background:#f8d7da;color:#842029;">🗑削除</button>
     </div>
 </div>
 
@@ -625,7 +651,7 @@ function renderSidebar(activeId) {
         const item = document.createElement("div");
         const isHnd = area.id === 'hnd';
         item.className = `tab-item ${area.id === activeId ? 'active' : ''} ${isHnd ? 'highlight-hnd' : ''}`;
-        item.setAttribute("draggable", isTabRenaming ? "false" : "true");
+        item.setAttribute("draggable", "false"); // ハンドルのmousedownで有効化
         item.setAttribute("data-index", index);
         item.addEventListener('dragstart', handleDragStart);
         item.addEventListener('dragover',  handleDragOver);
@@ -653,12 +679,27 @@ function renderSidebar(activeId) {
         const metaText = isMobile ? "" : `<span class="tab-meta">${area.radiusKm}km</span>`;
 
         item.innerHTML = `
+            <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
             <div class="tab-title-area" id="title-container-${area.id}">
                 <span class="tab-title-text" style="${tabStyle}">${shortText}</span>
                 ${metaText}
             </div>
+            <button class="delete-btn" onclick="deleteArea('${area.id}', event)" title="削除">✕</button>
             <button class="rename-btn" onclick="enableTabRename('${area.id}', event)">📝</button>
         `;
+        // ドラッグはハンドルのみ有効にする
+        setTimeout(() => {
+            const handle = item.querySelector('.drag-handle');
+            if (handle) {
+                handle.addEventListener('mousedown',  () => { item.setAttribute('draggable','true'); });
+                handle.addEventListener('touchstart', (e) => {
+                    item.setAttribute('draggable','true');
+                    handleTouchStart.call(item, e);
+                }, { passive: true });
+            }
+            item.addEventListener('mouseup',  () => item.setAttribute('draggable','false'));
+            item.addEventListener('touchend', (e) => { handleTouchEnd(e); item.setAttribute('draggable','false'); });
+        }, 0);
         listEl.appendChild(item);
     });
 }
@@ -705,6 +746,27 @@ function promptRenameCurrent() {
         const v = prompt("新しい空港・拠点名:", areaData.name);
         if (v && v.trim()) { areaData.name = v.trim(); document.getElementById("building-name").innerText = areaData.name; triggerStorage(); renderSidebar(currentActiveId); }
     }
+}
+
+// ============================================================
+// 空港削除
+// ============================================================
+function deleteArea(areaId, event) {
+    if (event) { event.stopPropagation(); event.preventDefault(); }
+    const area = AREAS.find(a => a.id === areaId);
+    if (!area) return;
+    const label = deriveShort(area.name) || areaId;
+    if (!confirm(`「${label}」を削除しますか？`)) return;
+    AREAS = AREAS.filter(a => a.id !== areaId);
+    // 削除後: 次のタブへ、なければ先頭へ
+    const nextId = AREAS.length > 0 ? AREAS[0].id : null;
+    if (nextId) selectTab(nextId);
+    triggerStorage();
+    triggerGistPush();
+    showToast(`🗑 ${label} を削除しました`);
+}
+function deleteCurrentArea() {
+    deleteArea(currentActiveId, null);
 }
 
 // ============================================================
@@ -783,6 +845,34 @@ function markSaved() {
         btn.style.boxShadow  = "";
         btn.innerText = "↑ 更新";
     }
+}
+
+// ============================================================
+// 現在タブの緯度経度を取得して保存（ツールバーボタン用）
+// ============================================================
+async function fetchGeoForCurrent() {
+    const area = AREAS.find(a => a.id === currentActiveId);
+    if (!area) return;
+    // タイトルと本文の先頭テキストを組み合わせてクエリ生成
+    const tmpN = document.createElement("div"); tmpN.innerHTML = area.name;
+    const tmpB = document.createElement("div"); tmpB.innerHTML = area.body;
+    const nameText = tmpN.innerText.trim();
+    const bodyText = tmpB.innerText.trim().split("\n")[0];
+    // 空港コードらしきものを優先
+    const iataMatch = nameText.match(/\b[A-Z]{3}\b/);
+    const query = iataMatch ? iataMatch[0] + " airport" : nameText || bodyText;
+    if (!query) { showToast("⚠️ クエリが空です"); return; }
+    // geocodeAndSaveを流用
+    const tmp = { ...area, name: area.name, lat: 0, lng: 0 };
+    await geocodeAndSave(tmp);
+    // 結果をARCHEASに反映
+    area.lat = tmp.lat;
+    area.lng = tmp.lng;
+    area.radiusKm = tmp.radiusKm;
+    triggerStorage();
+    markUnsaved();
+    triggerGistPush();
+    renderSidebar(currentActiveId);
 }
 
 // ============================================================
@@ -865,6 +955,39 @@ function showToast(msg) {
 // ============================================================
 // GPS連動
 // ============================================================
+// 一番近いスポットのタブに強制ジャンプ
+function jumpToNearest() {
+    if (!("geolocation" in navigator)) {
+        showToast("❌ GPS非対応");
+        return;
+    }
+    showToast("📡 現在地を取得中...");
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const uLat = pos.coords.latitude;
+            const uLng = pos.coords.longitude;
+            let nearest = null;
+            let minDist = Infinity;
+            for (const area of AREAS) {
+                if (!area.lat && !area.lng) continue;
+                const d = getDistanceKm(uLat, uLng, area.lat, area.lng);
+                if (d < minDist) { minDist = d; nearest = area; }
+            }
+            if (nearest) {
+                const distStr = minDist < 1
+                    ? `${Math.round(minDist * 1000)}m`
+                    : `${minDist.toFixed(1)}km`;
+                showToast(`📍 最寄: ${nearest.short || nearest.id.toUpperCase()} (${distStr})`);
+                selectTab(nearest.id);
+            } else {
+                showToast("❌ スポットが見つかりません");
+            }
+        },
+        () => showToast("❌ GPS取得失敗。位置情報の許可を確認してください"),
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
 function getDistanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
     const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
