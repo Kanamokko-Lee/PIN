@@ -649,6 +649,8 @@ function initSwipeDetection() {
     const zone = document.getElementById('swipe-zone');
     zone.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }, { passive: true });
     zone.addEventListener('touchend', (e) => {
+        // 画像タップ時はスワイプ処理をスキップ
+        if (e.target.classList && e.target.classList.contains('map-img')) return;
         const diffX = e.changedTouches[0].clientX - touchStartX;
         const diffY = e.changedTouches[0].clientY - touchStartY;
         if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
@@ -656,7 +658,7 @@ function initSwipeDetection() {
             if (diffX > 0 && sb.classList.contains('hidden')) sb.classList.remove('hidden');
             else if (diffX < 0 && !sb.classList.contains('hidden')) sb.classList.add('hidden');
         }
-    }, { passive: true });
+    }, { passive: false });
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
 
@@ -779,15 +781,17 @@ function _insertImgToEditor(url, width) {
     img.style.width = width;
     img.alt = 'image';
     img.contentEditable = 'false';
-    img.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openImgResize(img, e); });
-    img.addEventListener('touchstart', () => {
-        document.getElementById('editor-body').contentEditable = 'false';
+    img.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        openImgResize(img, e);
+    });
+    img.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
     }, { passive: true });
     img.addEventListener('touchend', (e) => {
         e.preventDefault(); e.stopPropagation();
-        setTimeout(() => { document.getElementById('editor-body').contentEditable = 'true'; }, 300);
         openImgResize(img, e);
-    });
+    }, { passive: false });
     const br1 = document.createElement('br');
     const br2 = document.createElement('br');
     if (_savedRange) {
@@ -1213,28 +1217,28 @@ function attachImgResizeHandlers(container) {
     container.querySelectorAll('img.map-img').forEach(img => {
         if (img.dataset.resizeAttached) return;
         img.dataset.resizeAttached = '1';
-
-        // contenteditable=false でiPhoneのカーソル挿入を防ぐ
         img.contentEditable = 'false';
 
+        // クリック（Mac/iPad）
         img.addEventListener('click', (e) => {
-            e.preventDefault(); e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
             openImgResize(img, e);
         });
 
-        // iPhone: touchstartで一時的にエディタのeditableをfalseに
+        // iPhone: touchstart/touchendの両方でpreventDefaultが必要
+        // passive:false で登録
         img.addEventListener('touchstart', (e) => {
-            const editor = document.getElementById('editor-body');
-            editor.contentEditable = 'false';
+            e.stopPropagation();
+            // touchstartでpreventDefaultするとスクロールも止まるので
+            // ここではstopPropagationのみ
         }, { passive: true });
 
         img.addEventListener('touchend', (e) => {
-            e.preventDefault(); e.stopPropagation();
-            // エディタを編集可能に戻す
-            const editor = document.getElementById('editor-body');
-            setTimeout(() => { editor.contentEditable = 'true'; }, 300);
+            e.preventDefault();
+            e.stopPropagation();
             openImgResize(img, e);
-        });
+        }, { passive: false });
     });
 }
 
