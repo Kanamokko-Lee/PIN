@@ -38,6 +38,24 @@
             background: #e5e5ea; border: none; border-radius: 4px;
         }
         .tab-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .sidebar-footer {
+            padding: 10px;
+            border-top: 1px solid #e5e5ea;
+            background: #f9f9fb;
+            flex-shrink: 0;
+        }
+        .add-tab-btn {
+            width: 100%;
+            padding: 10px;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .add-tab-btn:hover { background: #005bb5; }
         .tab-item {
             padding: 14px 16px; cursor: grab;
             border-bottom: 1px solid #f1f1f4;
@@ -161,6 +179,7 @@
             .sidebar-header button { font-size: 0.65rem; padding: 2px 0; width: 90%; text-align: center; }
             .tab-item { padding: 14px 2px; justify-content: center; text-align: center; font-size: 0.85rem; }
             .tab-title-text { font-size: 0.85rem; text-align: center; width: 100%; display: block; }
+            .add-tab-btn { font-size: 0.7rem; padding: 8px 4px; }
             .editor-container { padding: 15px 12px 70px 12px; }
             .top-bar { padding: calc(8px + env(safe-area-inset-top)) 10px 8px 10px; }
             .bottom-toolbar { height: calc(54px + env(safe-area-inset-bottom)); gap: 4px; padding: 6px 4px 0 4px; }
@@ -178,6 +197,9 @@
         <button onclick="manualRetry()">再捕</button>
     </div>
     <div id="tab-list" class="tab-list"></div>
+    <div class="sidebar-footer">
+        <button class="add-tab-btn" onclick="addNewAirport()">＋ 空港を追加</button>
+    </div>
 </div>
 
 <!-- メイン -->
@@ -547,6 +569,40 @@ function promptRenameCurrent() {
         const v = prompt("新しい空港・拠点名:", areaData.name);
         if (v && v.trim()) { areaData.name = v.trim(); document.getElementById("building-name").innerText = areaData.name; triggerStorage(); renderSidebar(currentActiveId); }
     }
+}
+
+// ============================================================
+// 空港追加
+// ============================================================
+function addNewAirport() {
+    // ユニークなIDを生成
+    const newId = "new_" + Date.now();
+    const newArea = {
+        id: newId,
+        name: "新しい空港",
+        short: "NEW",
+        lat: 0,
+        lng: 0,
+        radiusKm: 5.0,
+        body: ""
+    };
+    AREAS.push(newArea);
+    renderSidebar(newId);
+    selectTab(newId);
+    triggerStorage();
+    triggerGistPush();
+    // タイトルを選択状態にしてすぐ編集できるように
+    setTimeout(() => {
+        const title = document.getElementById("building-name");
+        if (title) {
+            title.focus();
+            const range = document.createRange();
+            range.selectNodeContents(title);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }, 100);
 }
 
 function renderEditor(areaId) {
