@@ -17,7 +17,7 @@
             box-sizing: border-box;
         }
 
-        /* ① 左側：サイドバー */
+        /* 左側：サイドバー */
         .sidebar {
             width: 260px;
             background: #f9f9fb;
@@ -120,7 +120,7 @@
             font-weight: bold;
         }
 
-        /* ② 右側：メインコンテンツ */
+        /* 右側：メインコンテンツ */
         .main-content {
             flex: 1;
             background: white;
@@ -175,10 +175,10 @@
             border-radius: 6px;
         }
 
-        /* 📱 本文表示エリア：iPadでツールバーと被らないよう下部マージンを完全固定 */
+        /* 本文表示エリア（iPad用底面余白確保） */
         .editor-container {
             flex: 1;
-            padding: 30px 40px 80px 40px; /* 下部に十分なクッションを確保 */
+            padding: 30px 40px 100px 40px;
             overflow-y: auto;
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
@@ -206,10 +206,10 @@
             border-radius: 8px;
         }
 
-        /* 💾 iPad/iPhone両対応：はみ出しを防ぐ相対・セーフエリア連動ツールバー */
+        /* iPad/iPhone両対応ツールバー */
         .bottom-toolbar {
             position: absolute;
-            bottom: 0%; /* 画面最下部に完全に吸着 */
+            bottom: 0;
             left: 0;
             right: 0;
             height: calc(56px + env(safe-area-inset-bottom));
@@ -284,7 +284,7 @@
             z-index: 1000;
         }
 
-        /* 📱 スマートフォン（iPhone）最適化表示 */
+        /* スマートフォン（iPhone）最適化表示 */
         @media screen and (max-width: 768px) {
             .sidebar { width: 60px; }
             .sidebar-header { 
@@ -371,17 +371,18 @@
     <div id="toast" class="toast">保存されました</div>
 
     <script>
-        // 【修正】G3ビルを「NGO」に割り当て変更しました
+        // 【修正】アップロード画像を基に全エリアデータを厳密に再構築
         const DEFAULT_AREAS = [
-            { id: "ngo", name: "🇯🇵NGO ビル: 44119# 3階", short: "NGO", lat: 34.858411, lng: 136.805382, radiusKm: 5.0, body: `Dispatch後<br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">4階</span> ＋ ターミナル<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3階</span><br><br>DOM <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 31383#</span> ,<br><br>INT <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 81611#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35#9<br><br>2026/5/1リバイス<br><br><br><img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="NGO-MAP">` },
-            { id: "itm", name: "🇯🇵ITM KKW:2階", short: "ITM", lat: 34.789539, lng: 135.438519, radiusKm: 4.0, body: `①KKWビル入口自動ドア：<span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold; font-size: large;">2485E</span><br>↑レンタカー区画、関西airport(株)出入口も<br><br>②KKW <span style="background-color: rgb(209, 231, 221); color: rgb(15, 81, 50); font-weight: bold;">3628</span><br>&nbsp;&nbsp;&nbsp;&nbsp;↑ID使用可(ターミナル側ガラス扉)<br><br><span style="background-color: rgb(255, 243, 205); color: rgb(102, 77, 3); font-weight: bold;">ーー Dispatch Briefing ーー</span><br><br>④北従業員 <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">検査場</span> 通路：<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold; font-size: large;">7244</span><br>&nbsp;&nbsp;&nbsp;&nbsp;(17番横)　(~6/1 20:30頃)<br><br>⑤ <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G, PBB : 8471</span> (5/1~)<br><br>2026/5/1　リバイス` },
-            { id: "hnd", name: "🇯🇵HND 新世紀ビル", short: "HND", lat: 35.549225, lng: 139.784432, radiusKm: 5.0, body: `羽田拠点データ用区画。<br><br>2026/5/1リバイス` },
-            { id: "cts", name: "🇯🇵CTS KKW:BD◯◯(前月)", short: "CTS", lat: 42.775244, lng: 141.692291, radiusKm: 5.0, body: `ID使えるらしい◆<br><br>エレベータ、保安検査場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3017#</span><br>2511、？<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">G : 2514</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41);">PBB: 2513</span><br><br>#14下クルーバス乗り場：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">25(1)2</span><br>ホテルバス @警察署先<br><br>2026/5/1リバイス.` },
-            { id: "fuk", name: "🇯🇵FUK ロビー→1250E 3階", short: "FUK", lat: 33.585806, lng: 130.450654, radiusKm: 4.0, body: `<span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G: 3042E</span> 左回転<br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB先端：5209E</span> 左回転<br><br>OPEN/ ARR時：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3042 E→3042 E</span><br>福岡昭和タクシー：0120-408-860<br>ターミナル出て左に変わった<br><br>ロビーから：「バックヤード」<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3994 E</span><br><br>2026/5/1リバイス` },
-            { id: "oka", name: "🇯🇵OKA 1F: 7575# 中2", short: "OKA", lat: 26.206453, lng: 127.646511, radiusKm: 4.0, body: `1F：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">7575#</span><br>中2階（JTA側・気象）：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">4123#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 3151#</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 1515#</span><br><br>2026/5/1リバイス` },
-            { id: "kmq", name: "🇯🇵KMQ 1F: 3121# G3511", short: "KMQ", lat: 36.393755, lng: 136.407519, radiusKm: 3.0, body: `1F：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">3121#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 3511</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 3511</span><br><br>2026/5/1リバイス` },
-            { id: "koj", name: "🇯🇵KOJ オペ室: 1234#", short: "KOJ", lat: 31.803450, lng: 130.719330, radiusKm: 3.0, body: `オペ室：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">1234#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 5678</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 5678</span><br><br>2026/5/1リバイス` },
-            { id: "kmj", name: "🇯🇵KMJ 2F: 5885#", short: "KMJ", lat: 32.837135, lng: 130.854930, radiusKm: 3.0, body: `2F オペ室前廊下扉：<span style="background-color: rgb(226, 227, 229); color: rgb(65, 70, 75); font-weight: bold;">5885#</span><br><br><span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">G : 2468</span> , <span style="background-color: rgb(248, 215, 218); color: rgb(132, 32, 41); font-weight: bold;">PBB : 2468</span><br><br>2026/5/1リバイス` }
+            { id: "ngo", name: "🇯🇵NGO 3 ビル: 44119# 3階", short: "NGO", lat: 34.858411, lng: 136.805382, radiusKm: 5.0, body: `<b>Dispatch後</b><br>&nbsp;&nbsp;&nbsp;&nbsp;:ビル<span style="background-color: #badbcc; color: #0f5132;">4階</span> ➔ ターミナル<span style="background-color: #badbcc; color: #0f5132;">3階</span><br><br><b>DOM</b> <span style="background-color: #f8d7da; color: #842029; font-weight: bold;">G : 31<u>3</u>83#</span> ,<br><br><b>INT</b> <span style="background-color: #d1e7dd; color: #0f5132; font-weight: bold;">G : 81<u>6</u>11#</span> ,<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : 35<u>8</u>9<br><br>2026/5/1リバイス<br><br><img src="https://i.imgur.com/2Pof6i0.png" class="map-img" alt="NGO-MAP">` },
+            { id: "fuk", name: "🇯🇵F2 ロビー➔1250E 3階", short: "FUK", lat: 33.585806, lng: 130.450654, radiusKm: 4.0, body: `<span style="color: #ff3b30; font-weight: bold; background-color: #f8d7da;">G: 30<u>4</u>2E</span> 左回転<br><br><span style="color: #ff3b30; font-weight: bold; background-color: #f8d7da;">PBB先端 : 52<u>0</u>9E</span> 左回転<br><br>OPEN/ ARR時 : <span style="background-color: #e2e3e5;">30<u>4</u>2 E➔30<u>4</u>2 E</span><br>福岡昭和タクシー : 0120-408-860<br>ターミナル出て左に変わった<br><br>ロビーから : 「バックヤード」 <span style="background-color: #e2e3e5;">399<u>4</u> E</span><br><br>2026/5/1リバイス` },
+            { id: "hnd", name: "☀️HND 3 F1<u>2</u>9 (~8/31)", short: "HND", lat: 35.549225, lng: 139.784432, radiusKm: 5.0, body: `<b>DOM</b> <span style="background-color: #f8d7da; font-weight: bold;">G : 72<u>6</u>6</span>, (-10/31)<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : <span style="background-color: #f8d7da;">C0<u>2</u>25</span> (~10/31)<br><br><b>INT</b> <span style="background-color: #d1e7dd; font-weight: bold;">G : 03<u>9</u>7</span> (~ 8/1)<br>&nbsp;&nbsp;&nbsp;&nbsp;PBB : <span style="background-color: #d1e7dd;">38<u>0</u>4</span> (~ 4/30) <span style="color:#8e8e93;">•••</span><br><br><b>出勤動線扉A : 54<u>8</u>0</b> (~11/1, 2時頃)<br>保安検査場逆流 : 99<u>0</u>9<br><br><br>2026/5/1リバイス<br><br><b>北側 F1<u>3</u>0</b>` },
+            { id: "nrt", name: "☀️NRT 3", short: "NRT", lat: 35.771986, lng: 140.392850, radiusKm: 5.0, body: `BAG : P29➔<b>M9</b>カウンターに変更<br><br><span style="background-color: #f8d7da; font-weight: bold; font-size: 1.2rem;">G : 08<u>7</u>4,</span> <span style="font-size: 1.2rem;">PBB: </span><span style="background-color: #f8d7da; font-weight: bold; font-size: 1.2rem;">01<u>3</u>3</span><br><br>あいうえ<span style="background-color: #fff3cd;">お</span>` },
+            { id: "can", name: "🇨🇳CAN3", short: "CAN", lat: 23.392436, lng: 113.298786, radiusKm: 5.0, body: `<b>PBB : 20<u>3</u>510レ</b><br><br>到着 : <br><br><br>出発 : <br>@ホテル<br>Dispatch Brief : ホテル2階 (W213)<br>PBBの暗証番号を聞く<br>終了後ホテル1階ロビー ➔ バスで空港3階 46ゲートから入る<br><br>@空港<br>手荷物 : Mカウンター<br>手荷物検査 : STAFF LANE ➔「<b>乗務員搭乗LIST</b>」、<b>パスポート、ID</b><br>税関 : 「税関申告書」を提出<br>出国 : CREW LANE ➔「<b>乗務員搭乗LIST</b>」「<b>GD</b>」提出` },
+            { id: "pvg", name: "🇨🇳PVG3", short: "PVG", lat: 31.143378, lng: 121.805214, radiusKm: 5.0, body: `<h3>外部点検 : 05<u>8</u>3#</h3>` },
+            { id: "kix", name: "🇯🇵KIX 2 エア棟: 11<u>2</u>5E 5階", short: "KIX", lat: 34.436502, lng: 135.244146, radiusKm: 5.0, body: `エア棟<span style="background-color: #fff3cd;">5</span>階 ＝ タ<span style="background-color: #fff3cd;">3</span>階　<span style="background-color: #fff3cd;">4</span>階へ<br>タ<u>4</u>階 ➔ <span style="background-color: #fff3cd;">北側(遠い方)保安検査</span> ➔ 3階出国<br><br><span style="background-color: #d1e7dd; font-weight: bold;">INT</span> 検査後 : <span style="background-color: #d1e7dd;">50<u>3</u>1▽</span> (23~7時)<br><br><span style="background-color: #d1e7dd; font-weight: bold; font-size:1.2rem;">G : 0<u>7</u>GG#</span> ,<br><br>PBB : 0<u>9</u>33# 螺旋 : 0<u>9</u>40<br><hr style="border:0; border-top:1px solid #e5e5ea;"><br><span style="background-color: #f8d7da; font-weight: bold;">DOM</span> 2F検査後 : 5<u>0</u>71▽<br><br><span style="background-color: #f8d7da; font-weight: bold; font-size:1.2rem;">G : 0<u>9</u>GGE</span> ,<br><br>PBB : 0<u>9</u>33# 螺旋 : 0<u>9</u>40<br><br>2026/5/1　変更無し` },
+            { id: "oka", name: "🇯🇵OKA 3 ビル : *5<u>0</u>71#", short: "OKA", lat: 26.206453, lng: 127.646511, radiusKm: 5.0, body: `<h3><span style="background-color: #d1e7dd;">KKW 4階</span> 67<u>1</u>7E</h3><br><span style="background-color: #f8d7da; font-weight: bold; font-size:1.1rem;">G : *6<u>3</u>74#</span> (~5/31)<br><br><span style="background-color: #f8d7da; font-weight: bold; font-size:1.1rem;">PBB : ■2<u>0</u>18▼</span> (~5/31)<br><br><br>2026/5/1リバイス` },
+            { id: "tpe", name: "🦷TPE3 104<u>1</u>E : #D7 下", short: "TPE", lat: 25.079651, lng: 121.234217, radiusKm: 4.0, body: `<b>D1ゲート反対側　業務用エレベーター</b>　<span style="background-color: #f8d7da; font-weight: bold;">55<u>7</u>6</span><br><b>PBB</b> : 整備士、KI、委託作業員に依頼` },
+            { id: "tsa", name: "🦷TSA3 KKW : #6,5番下", short: "TSA", lat: 25.069722, lng: 121.551667, radiusKm: 4.0, body: `<h3>PBB : 34<u>1</u>9#</h3>` }
         ];
 
         let AREAS = [];
@@ -485,10 +486,10 @@
             input.click();
         }
 
-        // ✍️ エディタ基本コマンド
+        // エディタ基本コマンド
         function execCmd(command, value = null) { document.execCommand(command, false, value); saveBodyChange(); }
         
-        // 🔢 数値指定（pt）フォントサイズ変更用ロジック
+        // 数値指定（pt）フォントサイズ変更用ロジック
         function execCustomFontSize(size) {
             if (!size) return;
             const selection = window.getSelection();
@@ -498,7 +499,6 @@
             const span = document.createElement("span");
             span.style.fontSize = size;
             
-            // 選択部分をカスタムspanで囲う
             try {
                 span.appendChild(range.extractContents());
                 range.insertNode(span);
@@ -507,7 +507,7 @@
                 newRange.selectNodeContents(span);
                 selection.addRange(newRange);
             } catch (e) {
-                document.execCommand("fontSize", false, "3"); // フォールバック
+                document.execCommand("fontSize", false, "3");
             }
             saveBodyChange();
         }
