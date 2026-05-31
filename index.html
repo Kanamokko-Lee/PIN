@@ -913,17 +913,16 @@ const DEFAULT_AREAS = [
 async function init() {
     // Gist設定を復元（PWA再起動時も引き継ぎ）
     // デフォルト値を埋め込み済み（未設定時はこれを使用）
-    const DEFAULT_GIST_URL   = "https://gist.githubusercontent.com/Kanamokko-Lee/69bf85f5413113415ad596053f42d77d/raw/airports.json";
-    const DEFAULT_GIST_TOKEN = "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";
-    const DEFAULT_GIST_ID    = "69bf85f5413113415ad596053f42d77d";
+    const DEFAULT_GIST_URL = "https://gist.githubusercontent.com/Kanamokko-Lee/69bf85f5413113415ad596053f42d77d/raw/airports.json";
+    const DEFAULT_GIST_ID  = "69bf85f5413113415ad596053f42d77d";
     try {
         const s = JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || "{}");
         GIST_RAW_URL = s.url   || DEFAULT_GIST_URL;
-        GIST_TOKEN   = s.token || DEFAULT_GIST_TOKEN;
+        GIST_TOKEN   = s.token || "";
         GIST_ID      = s.id    || DEFAULT_GIST_ID;
     } catch(e) {
         GIST_RAW_URL = DEFAULT_GIST_URL;
-        GIST_TOKEN   = DEFAULT_GIST_TOKEN;
+        GIST_TOKEN   = "";
         GIST_ID      = DEFAULT_GIST_ID;
     }
 
