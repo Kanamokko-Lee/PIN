@@ -100,8 +100,8 @@
         .tab-item:hover { background-color: #f1f1f4; }
         .tab-item.active { background-color: #e5e5ea; font-weight: bold; color: #1d1d1f; }
         .tab-item.highlight-hnd { box-shadow: inset 0 0 0 2px #f5a623; border-left: 3px solid #f5a623; }
-        .tab-item.highlight-china .tab-title-text  { color: #ff3b30 !important; }
-        .tab-item.highlight-taiwan .tab-title-text { color: #34c759 !important; }
+        .tab-item.highlight-china .tab-title-text  { color: #ff3b30; }
+        .tab-item.highlight-taiwan .tab-title-text { color: #34c759; }
         .tab-title-area { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
         .tab-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tab-meta { font-size: 0.75rem; color: #8e8e93; font-weight: normal; }
@@ -710,11 +710,15 @@ function renderSidebar(activeId) {
         // short: nameのタイトルから自動生成（bodyではなくnameが正）
         const shortText = deriveShort(area.name);
 
-        // shortの色をname・bodyのspanから抽出
-        const { color: shortColor, bg: shortBg } = deriveShortColor(area.name, area.body, shortText);
+        // tabColor: JSONに明示されていればそれを優先、なければname/bodyのspanから抽出
         let tabStyle = "font-weight:600;";
-        if (shortColor) tabStyle += `color:${shortColor};`;
-        if (shortBg)    tabStyle += `background-color:${shortBg};border-radius:4px;padding:1px 4px;`;
+        if (area.tabColor) {
+            tabStyle += `color:${area.tabColor};`;
+        } else {
+            const { color: shortColor, bg: shortBg } = deriveShortColor(area.name, area.body, shortText);
+            if (shortColor) tabStyle += `color:${shortColor};`;
+            if (shortBg)    tabStyle += `background-color:${shortBg};border-radius:4px;padding:1px 4px;`;
+        }
 
         // iPad/Mac はshort＋監視距離を表示
         const metaText = isMobile ? "" : `<span class="tab-meta">${area.radiusKm}km</span>`;
