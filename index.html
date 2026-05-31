@@ -317,8 +317,8 @@ async function syncFromGist(force = false) {
     try {
         // キャッシュバスターを付けてブラウザキャッシュを回避
         const url = GIST_RAW_URL + "?t=" + Date.now();
-        const headers = GIST_TOKEN ? { "Authorization": "token " + GIST_TOKEN } : {};
-        const res = await fetch(url, { headers });
+        // Public Gistの取得はTokenなし（Authヘッダーがあると403になる）
+        const res = await fetch(url);
         if (!res.ok) throw new Error("HTTP " + res.status);
         const parsed = await res.json();
         if (!Array.isArray(parsed) || parsed.length === 0 || !parsed[0].id) throw new Error("形式エラー");
