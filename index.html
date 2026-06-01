@@ -1545,13 +1545,6 @@ function startGpsTracking() {
                     : minDist.toFixed(1) + "km";
                 setGpsStatus(`📍 ${nearest.short} (${distStr})`, "gps-active");
                 if (currentActiveId !== nearest.id) selectTab(nearest.id);
-                // iPhone: GPS取得成功後にサイドバーを自動で隠す
-                if (window.innerWidth <= 768) {
-                    const sb = document.getElementById('sidebar');
-                    if (sb && !sb.classList.contains('hidden')) {
-                        sb.classList.add('hidden');
-                    }
-                }
             } else {
                 setGpsStatus("📡 GPS取得中", "");
             }
