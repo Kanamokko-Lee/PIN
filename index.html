@@ -241,11 +241,21 @@
             background-repeat: no-repeat; background-position: right 8px center;
         }
         .toggle-sidebar-trigger {
-            position: absolute; left: 14px; bottom: calc(70px + env(safe-area-inset-bottom));
-            width: 40px; height: 40px; border-radius: 20px;
-            background: rgba(0,0,0,0.7); color: white; border: none; font-size: 1.2rem;
+            position: absolute; left: 10px; bottom: calc(116px + env(safe-area-inset-bottom));
+            width: 44px; height: 30px; border-radius: 8px;
+            background: rgba(0,0,0,0.6); color: white; border: none; font-size: 1rem;
             display: flex; align-items: center; justify-content: center;
+            z-index: 99; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .nearest-float-btn {
+            position: absolute; left: 10px; bottom: calc(70px + env(safe-area-inset-bottom));
+            width: 44px; height: 44px; border-radius: 22px;
+            background: #34c759; color: white; border: none; font-size: 1rem; font-weight: bold;
+            display: none; align-items: center; justify-content: center;
             z-index: 99; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        @media screen and (max-width: 768px) {
+            .nearest-float-btn { display: flex; }
         }
 
         /* ── Gist設定モーダル ── */
@@ -352,6 +362,7 @@
 <!-- メイン -->
 <div class="main-content" id="main-content">
     <button class="toggle-sidebar-trigger" onclick="toggleSidebar()">⇄</button>
+    <button class="nearest-float-btn" onclick="jumpToNearest()" title="最寄スポット">最寄</button>
 
     <div class="top-bar">
         <!-- 上段: GPS状態（左） + Gist設定（右） -->
@@ -364,7 +375,7 @@
             <button onclick="jumpToNearest()" class="nearest-btn" title="一番近いスポットを開く">最寄</button>
             <div style="display:flex;gap:6px;">
                 <button onclick="syncFromGist(true)" class="file-input-btn">↓ 取得</button>
-                <button id="push-btn" onclick="pushToGist()" class="sync-btn">↑ 更新</button>
+                <button id="push-btn" onclick="pushToGist()" class="sync-btn" style="background:#b0b0b8;">↑ 更新</button>
             </div>
         </div>
     </div>
@@ -521,6 +532,29 @@ function saveGistSettings() {
 // Gist から取得（↓ 取得ボタン）
 // force=true のときはlocalStorageより優先
 // ============================================================
+// 取得ボタンの色を管理
+function updateFetchBtnColor(isNew) {
+    const btn = document.querySelector('button[onclick="syncFromGist(true)"]');
+    if (!btn) return;
+    btn.style.background = isNew ? "#0071e3" : "#e5e5ea";
+    btn.style.color      = isNew ? "#fff"    : "#333";
+}
+
+// 起動時にGistの更新日時を確認して取得ボタンの色を更新
+async function checkGistFreshness() {
+    if (!GIST_ID || !GIST_RAW_URL) return;
+    try {
+        const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: GIST_TOKEN ? { "Authorization": "token " + GIST_TOKEN } : {}
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const gistUpdated = new Date(data.updated_at).getTime();
+        const localSaved  = parseInt(localStorage.getItem('gist_last_synced') || '0');
+        updateFetchBtnColor(gistUpdated > localSaved);
+    } catch(e) { /* サイレント */ }
+}
+
 async function syncFromGist(force = false) {
     if (!GIST_RAW_URL) {
         showToast("⚙️ まずGistのURLを設定してください");
@@ -539,9 +573,10 @@ async function syncFromGist(force = false) {
         if (!Array.isArray(parsed) || parsed.length === 0 || !parsed[0].id) throw new Error("形式エラー");
         AREAS = parsed.map(a => { if (!a.short) a.short = a.id.toUpperCase(); return a; });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(AREAS));
+        localStorage.setItem('gist_last_synced', Date.now().toString());
+        updateFetchBtnColor(false);
         setGpsStatus("✅ Gist同期済", "sync-ok");
         showToast("✅ Gistから最新データを取得しました");
-        // 現在のタブが取得後も存在すれば維持、なければ先頭へ
         const stillExists = AREAS.find(a => a.id === currentActiveId);
         selectTab(stillExists ? currentActiveId : AREAS[0].id);
         setTimeout(() => startGpsTracking(), 2000);
@@ -1401,14 +1436,14 @@ function markUnsaved() {
     const btn = document.getElementById("push-btn");
     if (btn) {
         btn.style.background = "#ff3b30";
-        btn.style.boxShadow  = "0 0 8px rgba(255,59,48,0.7)";
-        btn.innerText = "↑ 未反映";
+        btn.style.boxShadow  = "0 0 6px rgba(255,59,48,0.5)";
+        btn.innerText = "↑ 更新";
     }
 }
 function markSaved() {
     const btn = document.getElementById("push-btn");
     if (btn) {
-        btn.style.background = "#0071e3";
+        btn.style.background = "#b0b0b8";
         btn.style.boxShadow  = "";
         btn.innerText = "↑ 更新";
     }
@@ -1728,6 +1763,7 @@ async function init() {
     startGpsTracking();
     initSwipeDetection();
     initSidebarResize();
+    setTimeout(checkGistFreshness, 2000);
 
     // Gist設定があれば起動時にバックグラウンドで最新取得
     if (GIST_RAW_URL) {
