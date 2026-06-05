@@ -1050,7 +1050,7 @@ function renderSidebar(activeId) {
     const isMobile = window.innerWidth <= 768;
     AREAS.forEach((area, index) => {
         const item = document.createElement("div");
-        const isHnd    = area.id === 'hnd';
+        const isHnd = area.id === 'hnd' || area.id === 'hnd-dom' || area.id === 'hnd-int';
         const isChinese = area.id === 'pvg' || area.id === 'can';
         const isTaiwan  = area.id === 'tpe' || area.id === 'tsa';
         item.className = `tab-item ${area.id === activeId ? 'active' : ''} ${isHnd ? 'highlight-hnd' : ''} ${isChinese ? 'highlight-china' : ''} ${isTaiwan ? 'highlight-taiwan' : ''}`;
@@ -1069,8 +1069,8 @@ function renderSidebar(activeId) {
             else selectTab(area.id);
         };
 
-        // short: nameのタイトルから自動生成（bodyではなくnameが正）
-        const shortText = deriveShort(area.name);
+        // short: JSONのshortフィールドを優先、なければ自動生成
+        const shortText = area.short || deriveShort(area.name);
 
         // tabColor優先順位:
         // 1. JSONの tabColor フィールド
